@@ -25,8 +25,8 @@ func TestZshWizardModel_New(t *testing.T) {
 		t.Error("wizard state should be initialized")
 	}
 
-	if m.currentView != ZshWizardViewCoreComponents {
-		t.Errorf("initial view = %v, want ZshWizardViewCoreComponents", m.currentView)
+	if m.currentView != ZshWizardViewPlugins {
+		t.Errorf("initial view = %v, want ZshWizardViewPlugins", m.currentView)
 	}
 }
 
@@ -50,9 +50,9 @@ func TestZshWizardModel_View_Initial(t *testing.T) {
 		t.Error("View() returned empty string")
 	}
 
-	// Should show core components selection
-	if !containsString(view, "Core") && !containsString(view, "core") &&
-		!containsString(view, "Zsh") && !containsString(view, "Component") {
+	// Should show plugins step
+	if !containsString(view, "Plugins") && !containsString(view, "plugins") &&
+		!containsString(view, "Zsh") {
 		t.Logf("View output: %s", view)
 	}
 }
@@ -94,18 +94,37 @@ func TestZshWizardModel_Navigation_Previous(t *testing.T) {
 	_ = m
 }
 
-// TestZshWizardModel_SelectCoreComponent tests selecting core component with space
-func TestZshWizardModel_SelectCoreComponent(t *testing.T) {
+// TestZshWizardModel_SelectPlugin tests selecting plugin with space
+func TestZshWizardModel_SelectPlugin(t *testing.T) {
 	m := newTestZshWizardModel()
 	m.width = 80
 	m.height = 24
 
-	// Select item with space
+	// Select item with space (plugins list)
 	newModel, _ := m.Update(tea.KeyMsg{Type: tea.KeySpace})
 	updated := newModel.(ZshWizardModel)
 
-	// State should be accessible
 	_ = updated.state
+}
+
+// TestZshWizardModel_SelectAll tests "marcar todos" (KeySelectAll) in plugins view
+func TestZshWizardModel_SelectAll(t *testing.T) {
+	m := newTestZshWizardModel()
+	m.width = 80
+	m.height = 24
+
+	// Press 'a' to select all plugins
+	newModel, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}})
+	updated := newModel.(ZshWizardModel)
+
+	for i, item := range updated.pluginItems {
+		if !item.Selected {
+			t.Errorf("plugin item %d (%s) should be selected after marcar todos", i, item.Name)
+		}
+	}
+	if len(updated.state.Selections.Plugins) != len(updated.pluginItems) {
+		t.Errorf("Selections.Plugins count = %d, want %d", len(updated.state.Selections.Plugins), len(updated.pluginItems))
+	}
 }
 
 // TestZshWizardModel_ViewTransitions tests all view transitions
@@ -115,7 +134,6 @@ func TestZshWizardModel_ViewTransitions(t *testing.T) {
 	m.height = 24
 
 	views := []ZshWizardView{
-		ZshWizardViewCoreComponents,
 		ZshWizardViewPlugins,
 		ZshWizardViewTools,
 		ZshWizardViewProjectConfig,
@@ -132,16 +150,18 @@ func TestZshWizardModel_ViewTransitions(t *testing.T) {
 	}
 }
 
-// TestZshWizardModel_ViewCoreComponents tests core components view
-func TestZshWizardModel_ViewCoreComponents(t *testing.T) {
+// TestZshWizardModel_ViewPluginsFirst tests plugins as first view
+func TestZshWizardModel_ViewPluginsFirst(t *testing.T) {
 	m := newTestZshWizardModel()
 	m.width = 80
 	m.height = 24
-	m.currentView = ZshWizardViewCoreComponents
 
 	view := m.View()
 	if view == "" {
-		t.Error("Core components view should not be empty")
+		t.Error("Plugins view should not be empty")
+	}
+	if !containsString(view, "Plugins") && !containsString(view, "plugins") {
+		t.Error("First view should show Plugins step")
 	}
 }
 

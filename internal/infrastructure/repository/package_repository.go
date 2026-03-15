@@ -58,13 +58,13 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 			CheckCmd:    "which antigravity",
 		},
 
-		// Shell Core (3)
+		// Shell Core (Zsh, Oh My Zsh, Powerlevel10k) - install via "Instalar componentes core"
 		{
 			ID:          "zsh",
 			Name:        "Zsh",
 			Description: "Z Shell - shell poderoso e configurável",
 			Version:     "latest",
-			Category:    types.PackageCategoryTool,
+			Category:    types.PackageCategoryZshCore,
 			InstallCmd:  "sudo apt-get install -y zsh",
 			CheckCmd:    "which zsh",
 		},
@@ -73,7 +73,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 			Name:        "Oh My Zsh",
 			Description: "Framework para gerenciar configuração Zsh",
 			Version:     "latest",
-			Category:    types.PackageCategoryTool,
+			Category:    types.PackageCategoryZshCore,
 			DownloadURL: "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh",
 			InstallCmd:  "sh -c \"$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\" \"\" --unattended",
 			CheckCmd:    "test -d ~/.oh-my-zsh",
@@ -83,7 +83,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 			Name:        "Powerlevel10k",
 			Description: "Tema Zsh rápido e customizável",
 			Version:     "latest",
-			Category:    types.PackageCategoryTool,
+			Category:    types.PackageCategoryZshCore,
 			InstallCmd:  "git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/powerlevel10k",
 			CheckCmd:    "test -d ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/powerlevel10k",
 		},

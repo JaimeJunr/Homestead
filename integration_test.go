@@ -5,6 +5,7 @@ import (
 
 	"github.com/jaime/mysystem/internal/app/services"
 	"github.com/jaime/mysystem/internal/domain/types"
+	"github.com/jaime/mysystem/internal/infrastructure/config"
 	"github.com/jaime/mysystem/internal/infrastructure/executor"
 	"github.com/jaime/mysystem/internal/infrastructure/installer"
 	"github.com/jaime/mysystem/internal/infrastructure/repository"
@@ -23,6 +24,10 @@ func TestIntegration_ScriptsAndTUI(t *testing.T) {
 	packageInstaller := installer.NewDefaultPackageInstaller()
 	installerService := services.NewInstallerService(packageRepo, packageInstaller)
 
+	// Create dependencies - Config
+	configManager := config.NewFileConfigManager("")
+	configService := services.NewConfigService(configManager)
+
 	// Get all scripts
 	allScripts, err := scriptService.GetAllScripts()
 	if err != nil {
@@ -34,7 +39,7 @@ func TestIntegration_ScriptsAndTUI(t *testing.T) {
 	}
 
 	// Create TUI model
-	model := tui.NewModel(scriptService, installerService)
+	model := tui.NewModel(scriptService, installerService, configService)
 
 	// Verify model initializes correctly
 	if model.Init() == nil {

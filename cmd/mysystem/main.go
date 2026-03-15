@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jaime/mysystem/internal/app/services"
+	"github.com/jaime/mysystem/internal/infrastructure/config"
 	"github.com/jaime/mysystem/internal/infrastructure/executor"
 	"github.com/jaime/mysystem/internal/infrastructure/installer"
 	"github.com/jaime/mysystem/internal/infrastructure/repository"
@@ -26,9 +27,11 @@ func main() {
 	// Application layer
 	scriptService := services.NewScriptService(scriptRepo, scriptExecutor)
 	installerService := services.NewInstallerService(packageRepo, packageInstaller)
+	configManager := config.NewFileConfigManager("")
+	configService := services.NewConfigService(configManager)
 
 	// Presentation layer
-	model := tui.NewModel(scriptService, installerService)
+	model := tui.NewModel(scriptService, installerService, configService)
 
 	// Create the TUI program
 	p := tea.NewProgram(

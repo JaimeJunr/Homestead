@@ -226,23 +226,14 @@ func TestWizardService_GeneratePreview(t *testing.T) {
 	}
 }
 
-// TestWizardService_ValidateSelections tests validating wizard selections
+// TestWizardService_ValidateSelections tests validating wizard selections (config wizard assumes core installed)
 func TestWizardService_ValidateSelections(t *testing.T) {
 	service := NewWizardService()
 	wizard := service.CreateNewWizard()
 
-	// Empty selections should fail
 	err := service.ValidateSelections(wizard)
-	if err == nil {
-		t.Error("Expected error for empty selections, got nil")
-	}
-
-	// Add minimum required selections
-	service.AddCoreComponent(wizard, "zsh")
-
-	err = service.ValidateSelections(wizard)
 	if err != nil {
-		t.Errorf("ValidateSelections() error = %v", err)
+		t.Errorf("ValidateSelections() error = %v (empty is valid when core installed separately)", err)
 	}
 }
 

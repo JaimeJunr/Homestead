@@ -43,6 +43,25 @@ func (s *InstallerService) GetPackagesByCategory(category types.PackageCategory)
 	return packages, nil
 }
 
+// GetPackagesByCategories returns packages from multiple categories (combined, no duplicates by ID)
+func (s *InstallerService) GetPackagesByCategories(categories []types.PackageCategory) ([]entities.Package, error) {
+	seen := make(map[string]bool)
+	var result []entities.Package
+	for _, cat := range categories {
+		packages, err := s.repo.FindByCategory(cat)
+		if err != nil {
+			return nil, fmt.Errorf("get packages by category %s: %w", cat, err)
+		}
+		for _, pkg := range packages {
+			if !seen[pkg.ID] {
+				seen[pkg.ID] = true
+				result = append(result, pkg)
+			}
+		}
+	}
+	return result, nil
+}
+
 // GetPackageByID returns a package by ID
 func (s *InstallerService) GetPackageByID(id string) (*entities.Package, error) {
 	pkg, err := s.repo.FindByID(id)

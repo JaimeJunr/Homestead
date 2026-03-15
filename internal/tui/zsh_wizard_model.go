@@ -10,12 +10,14 @@ import (
 	"github.com/jaime/mysystem/internal/domain/interfaces"
 )
 
-// ZshWizardView represents each view/step of the wizard
+// KeySelectAll is the standard key for "marcar todos" in multi-select lists (DRY: reuse in other parts)
+const KeySelectAll = "a"
+
+// ZshWizardView represents each view/step of the wizard (core is installed separately)
 type ZshWizardView int
 
 const (
-	ZshWizardViewCoreComponents ZshWizardView = iota
-	ZshWizardViewPlugins
+	ZshWizardViewPlugins ZshWizardView = iota
 	ZshWizardViewTools
 	ZshWizardViewProjectConfig
 	ZshWizardViewReview
@@ -89,14 +91,16 @@ var (
 				Foreground(lipgloss.Color("63"))
 )
 
-// NewZshWizardModel creates a new Zsh wizard model
+// NewZshWizardModel creates a new Zsh wizard model (assumes core is already installed)
 func NewZshWizardModel(wizardService *services.WizardService) ZshWizardModel {
 	state := wizardService.CreateNewWizard()
+	// Pre-fill core so generated .zshrc assumes zsh + oh-my-zsh + powerlevel10k
+	state.Selections.CoreComponents = []string{"zsh", "oh-my-zsh", "powerlevel10k"}
 
 	m := ZshWizardModel{
 		wizardService: wizardService,
 		state:         state,
-		currentView:   ZshWizardViewCoreComponents,
+		currentView:   ZshWizardViewPlugins,
 		cursor:        0,
 	}
 
@@ -185,7 +189,7 @@ func (m ZshWizardModel) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 
 	case "esc":
-		if m.currentView > ZshWizardViewCoreComponents {
+		if m.currentView > ZshWizardViewPlugins {
 			m.currentView--
 			_ = m.wizardService.PreviousStep(m.state)
 			m.cursor = 0
@@ -238,6 +242,10 @@ func (m ZshWizardModel) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case KeySelectAll: // Marcar todos (padrão do sistema para listas de seleção)
+		m.selectAllInCurrentView(items)
+		return m, nil
+
 	case "enter":
 		if m.cursor >= 0 && m.cursor < len(*items) {
 			m.toggleItem(items, m.cursor)
@@ -259,12 +267,6 @@ func (m *ZshWizardModel) toggleItem(items *[]WizardItem, index int) {
 
 	// Update wizard state
 	switch m.currentView {
-	case ZshWizardViewCoreComponents:
-		if item.Selected {
-			m.wizardService.AddCoreComponent(m.state, item.ID)
-		} else {
-			m.wizardService.RemoveCoreComponent(m.state, item.ID)
-		}
 	case ZshWizardViewPlugins:
 		if item.Selected {
 			m.wizardService.AddPlugin(m.state, item.ID)
@@ -287,8 +289,6 @@ func (m *ZshWizardModel) toggleItem(items *[]WizardItem, index int) {
 // getCurrentItems returns the current view's items
 func (m *ZshWizardModel) getCurrentItems() *[]WizardItem {
 	switch m.currentView {
-	case ZshWizardViewCoreComponents:
-		return &m.coreItems
 	case ZshWizardViewPlugins:
 		return &m.pluginItems
 	case ZshWizardViewTools:
@@ -297,6 +297,31 @@ func (m *ZshWizardModel) getCurrentItems() *[]WizardItem {
 		return &m.projectItems
 	}
 	return nil
+}
+
+// selectAllInCurrentView marks all items in the current list and syncs to wizard state.
+// Padrão reutilizável: outras telas de seleção múltipla podem usar a mesma tecla "a".
+func (m *ZshWizardModel) selectAllInCurrentView(items *[]WizardItem) {
+	if items == nil {
+		return
+	}
+	for i := range *items {
+		item := &(*items)[i]
+		if item.Selected {
+			continue
+		}
+		item.Selected = true
+		switch m.currentView {
+		case ZshWizardViewPlugins:
+			m.wizardService.AddPlugin(m.state, item.ID)
+		case ZshWizardViewTools:
+			m.wizardService.AddTool(m.state, item.ID)
+		case ZshWizardViewProjectConfig:
+			if item.ID == "include-project" {
+				m.wizardService.SetIncludeProjectConfig(m.state, true)
+			}
+		}
+	}
 }
 
 // View renders the wizard UI
@@ -309,8 +334,6 @@ func (m ZshWizardModel) View() string {
 	}
 
 	switch m.currentView {
-	case ZshWizardViewCoreComponents:
-		return m.renderSelectionView("Componentes Core", "Selecione os componentes principais do shell", m.coreItems)
 	case ZshWizardViewPlugins:
 		return m.renderSelectionView("Plugins Zsh", "Selecione os plugins que deseja instalar", m.pluginItems)
 	case ZshWizardViewTools:
@@ -368,9 +391,9 @@ func (m ZshWizardModel) renderSelectionView(title, subtitle string, items []Wiza
 		}
 	}
 
-	// Help
+	// Help (a: marcar todos = padrão reutilizável para seleção múltipla)
 	help := "\n" + wizardHelpStyle.Render(
-		"↑/↓: navegar • espaço: selecionar • n/→: próximo • esc: voltar • ctrl+c: sair",
+		"↑/↓: navegar • espaço: selecionar • a: marcar todos • n/→: próximo • esc: voltar • ctrl+c: sair",
 	)
 	builder.WriteString(help)
 

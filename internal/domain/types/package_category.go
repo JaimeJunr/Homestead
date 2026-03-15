@@ -4,15 +4,16 @@ package types
 type PackageCategory string
 
 const (
-	PackageCategoryIDE  PackageCategory = "ide"
-	PackageCategoryTool PackageCategory = "tool"
-	PackageCategoryApp  PackageCategory = "app"
+	PackageCategoryIDE     PackageCategory = "ide"
+	PackageCategoryTool    PackageCategory = "tool"
+	PackageCategoryApp     PackageCategory = "app"
+	PackageCategoryZshCore PackageCategory = "zsh_core"
 )
 
 // IsValid checks if the category is valid
 func (c PackageCategory) IsValid() bool {
 	switch c {
-	case PackageCategoryIDE, PackageCategoryTool, PackageCategoryApp:
+	case PackageCategoryIDE, PackageCategoryTool, PackageCategoryApp, PackageCategoryZshCore:
 		return true
 	default:
 		return false

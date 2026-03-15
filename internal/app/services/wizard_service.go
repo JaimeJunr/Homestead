@@ -26,15 +26,10 @@ type WizardStep struct {
 	Required    bool
 }
 
-// NewWizardService creates a new wizard service
+// NewWizardService creates a new wizard service (core components are installed separately)
 func NewWizardService() *WizardService {
 	return &WizardService{
 		steps: []WizardStep{
-			{
-				Name:        "Core Components",
-				Description: "Select core shell components (Zsh, Oh My Zsh, theme)",
-				Required:    true,
-			},
 			{
 				Name:        "Plugins",
 				Description: "Select Zsh plugins to install",
@@ -200,13 +195,8 @@ func (ws *WizardService) GeneratePreview(state *WizardState) string {
 	return builder.String()
 }
 
-// ValidateSelections validates the wizard selections
+// ValidateSelections validates the wizard selections (core is assumed installed when entering config wizard)
 func (ws *WizardService) ValidateSelections(state *WizardState) error {
-	// Must have at least one core component
-	if len(state.Selections.CoreComponents) == 0 {
-		return fmt.Errorf("at least one core component must be selected")
-	}
-
 	return nil
 }
 
@@ -246,15 +236,6 @@ func (ws *WizardService) CanProceed(state *WizardState) bool {
 		return false
 	}
 
-	// If step is required, check if selections are valid
-	if step.Required {
-		// For first step (Core Components), must have at least one selection
-		if state.CurrentStep == 0 {
-			return len(state.Selections.CoreComponents) > 0
-		}
-	}
-
-	// Can always proceed from non-required steps
 	return true
 }
 

@@ -26,12 +26,14 @@ const (
 	ViewExecuting
 	ViewInstalling
 	ViewZshWizard
+	ViewZshApplying
 )
 
 // Model is the main TUI model
 type Model struct {
 	scriptService    *services.ScriptService
 	installerService *services.InstallerService
+	configService    *services.ConfigService
 	state            ViewState
 	mainMenu         list.Model
 	scriptList       list.Model
@@ -54,12 +56,32 @@ type Model struct {
 
 	// Zsh wizard
 	zshWizard *ZshWizardModel
+
+	// Zsh core: when true, "Configurar Zsh" is shown in menu (oh-my-zsh installed)
+	zshCoreInstalled bool
+	zshCoreChecked   bool
+
+	// Zsh apply feedback: phase "applying" | "success" | "error"
+	zshApplyPhase string
+	zshApplyError error
 }
+
+// menuAction identifies the main menu action (for dynamic menu with optional "Configurar Zsh")
+const (
+	menuActionCleanup     = "cleanup"
+	menuActionMonitoring  = "monitoring"
+	menuActionInstallers  = "installers"
+	menuActionZshConfig   = "zsh_config"
+	menuActionMigration  = "migration"
+	menuActionSettings    = "settings"
+	menuActionQuit       = "quit"
+)
 
 // menuItem represents a menu option
 type menuItem struct {
-	title string
-	desc  string
+	title  string
+	desc   string
+	action string
 }
 
 func (i menuItem) Title() string       { return i.title }
@@ -92,6 +114,19 @@ type installCompleteMsg struct {
 	err error
 }
 
+// zshCoreInstalledMsg is sent when the check for oh-my-zsh installation completes
+type zshCoreInstalledMsg struct {
+	installed bool
+}
+
+// zshApplyResultMsg is sent when ApplyConfig finishes
+type zshApplyResultMsg struct {
+	Err error
+}
+
+// zshApplyReturnToMenuMsg is sent after a delay to return to main menu
+type zshApplyReturnToMenuMsg struct{}
+
 var (
 	titleStyle = lipgloss.NewStyle().
 			Bold(true).
@@ -122,19 +157,27 @@ var (
 			Padding(0, 1)
 )
 
-// NewModel creates the TUI model with dependencies injected
-func NewModel(scriptService *services.ScriptService, installerService *services.InstallerService) Model {
-	// Main menu items
-	mainItems := []list.Item{
-		menuItem{title: "🧹 Limpeza do Sistema", desc: "Scripts de limpeza e manutenção"},
-		menuItem{title: "📊 Monitoramento", desc: "Informações do sistema"},
-		menuItem{title: "📦 Instaladores", desc: "Instalar ferramentas e aplicações"},
-		menuItem{title: "🐚 Configurar Zsh", desc: "Instalar e configurar Zsh/Oh My Zsh com plugins"},
-		menuItem{title: "🔄 Migração", desc: "Exportar/Importar configurações (em breve)"},
-		menuItem{title: "⚙️  Configurações", desc: "Configurar a ferramenta (em breve)"},
-		menuItem{title: "❌ Sair", desc: "Fechar MySystem"},
+// getMainMenuItems returns menu items; "Configurar Zsh" only when zsh core is installed
+func getMainMenuItems(zshCoreInstalled bool) []list.Item {
+	items := []list.Item{
+		menuItem{title: "🧹 Limpeza do Sistema", desc: "Scripts de limpeza e manutenção", action: menuActionCleanup},
+		menuItem{title: "📊 Monitoramento", desc: "Informações do sistema", action: menuActionMonitoring},
+		menuItem{title: "📦 Instaladores", desc: "Instalar ferramentas e aplicações (IDEs, Zsh, Oh My Zsh, etc.)", action: menuActionInstallers},
 	}
+	if zshCoreInstalled {
+		items = append(items, menuItem{title: "⚙️  Configurar Zsh", desc: "Plugins, temas e .zshrc", action: menuActionZshConfig})
+	}
+	items = append(items,
+		menuItem{title: "🔄 Migração", desc: "Exportar/Importar configurações (em breve)", action: menuActionMigration},
+		menuItem{title: "⚙️  Configurações", desc: "Configurar a ferramenta (em breve)", action: menuActionSettings},
+		menuItem{title: "❌ Sair", desc: "Fechar MySystem", action: menuActionQuit},
+	)
+	return items
+}
 
+// NewModel creates the TUI model with dependencies injected
+func NewModel(scriptService *services.ScriptService, installerService *services.InstallerService, configService *services.ConfigService) Model {
+	mainItems := getMainMenuItems(false) // will refresh when zsh core check completes
 	mainList := list.New(mainItems, list.NewDefaultDelegate(), 0, 0)
 	mainList.Title = "MySystem - Gerenciador de Sistema"
 	mainList.SetShowStatusBar(false)
@@ -150,6 +193,7 @@ func NewModel(scriptService *services.ScriptService, installerService *services.
 	return Model{
 		scriptService:    scriptService,
 		installerService: installerService,
+		configService:    configService,
 		state:            ViewMainMenu,
 		mainMenu:         mainList,
 		progress:         prog,
@@ -158,9 +202,17 @@ func NewModel(scriptService *services.ScriptService, installerService *services.
 	}
 }
 
+// checkZshCoreInstalled runs in a Cmd to detect if oh-my-zsh is installed (for menu)
+func checkZshCoreInstalled(installerService *services.InstallerService) tea.Cmd {
+	return func() tea.Msg {
+		installed, _ := installerService.IsPackageInstalled("oh-my-zsh")
+		return zshCoreInstalledMsg{installed: installed}
+	}
+}
+
 // Init initializes the model
 func (m Model) Init() tea.Cmd {
-	return m.spinner.Tick
+	return tea.Batch(m.spinner.Tick, checkZshCoreInstalled(m.installerService))
 }
 
 // Update handles messages and updates state
@@ -195,6 +247,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case installCompleteMsg:
 		m.state = ViewMainMenu
 		m.aborted = false
+		// Re-check zsh core so "Configurar Zsh" appears if user just installed it
+		return m, checkZshCoreInstalled(m.installerService)
+
+	case zshCoreInstalledMsg:
+		m.zshCoreChecked = true
+		m.zshCoreInstalled = msg.installed
+		m.mainMenu.SetItems(getMainMenuItems(m.zshCoreInstalled))
 		return m, nil
 
 	case spinner.TickMsg:
@@ -203,6 +262,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case tea.KeyMsg:
+		// In Zsh apply result screen, Enter/Esc return to menu
+		if m.state == ViewZshApplying && (m.zshApplyPhase == "success" || m.zshApplyPhase == "error") {
+			if msg.String() == "enter" || msg.String() == "esc" {
+				m.state = ViewMainMenu
+				m.zshApplyPhase = ""
+				m.zshApplyError = nil
+				return m, nil
+			}
+		}
 		// When in Zsh wizard, let the wizard handle all keys (don't consume enter/esc here)
 		if m.state != ViewZshWizard {
 			switch msg.String() {
@@ -237,6 +305,29 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m.handleEnter()
 			}
 		}
+
+	case zshApplyResultMsg:
+		if m.state == ViewZshApplying {
+			if msg.Err != nil {
+				m.zshApplyPhase = "error"
+				m.zshApplyError = msg.Err
+			} else {
+				m.zshApplyPhase = "success"
+				m.zshApplyError = nil
+			}
+			return m, tea.Tick(time.Second*2, func(time.Time) tea.Msg {
+				return zshApplyReturnToMenuMsg{}
+			})
+		}
+		return m, nil
+
+	case zshApplyReturnToMenuMsg:
+		if m.state == ViewZshApplying {
+			m.state = ViewMainMenu
+			m.zshApplyPhase = ""
+			m.zshApplyError = nil
+		}
+		return m, nil
 	}
 
 	// Delegate to ZshWizard when in wizard state
@@ -247,8 +338,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Check if wizard is done
 		if wizard.IsDone() || wizard.IsCancelled() {
-			m.state = ViewMainMenu
+			if wizard.IsCancelled() {
+				m.state = ViewMainMenu
+				m.zshWizard = nil
+				return m, cmd
+			}
+			// Done and not cancelled: apply config and show feedback
+			selections := wizard.GetSelections()
 			m.zshWizard = nil
+			m.state = ViewZshApplying
+			m.zshApplyPhase = "applying"
+			m.zshApplyError = nil
+			return m, applyZshConfigCmd(m.configService, selections)
 		}
 
 		return m, cmd
@@ -272,32 +373,37 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) handleEnter() (tea.Model, tea.Cmd) {
 	switch m.state {
 	case ViewMainMenu:
-		selected := m.mainMenu.Index()
-
-		switch selected {
-		case 0: // Limpeza
+		selected := m.mainMenu.SelectedItem()
+		item, ok := selected.(menuItem)
+		if !ok {
+			return m, nil
+		}
+		switch item.action {
+		case menuActionCleanup:
 			m.state = ViewScriptList
 			m.selectedMenu = 0
 			m.loadScripts(types.CategoryCleanup)
-		case 1: // Monitoramento
+		case menuActionMonitoring:
 			m.state = ViewScriptList
 			m.selectedMenu = 1
 			m.loadScripts(types.CategoryMonitoring)
-		case 2: // Instaladores
+		case menuActionInstallers:
 			m.state = ViewPackageList
 			m.selectedMenu = 2
-			m.loadPackages(types.PackageCategoryIDE)
-		case 3: // Configurar Zsh
+			m.loadPackagesFromCategories([]types.PackageCategory{types.PackageCategoryIDE, types.PackageCategoryZshCore})
+		case menuActionZshConfig:
 			m.state = ViewZshWizard
 			wizardService := services.NewWizardService()
 			wizard := NewZshWizardModel(wizardService)
 			wizard.width = m.width
 			wizard.height = m.height
 			m.zshWizard = &wizard
-		case 6: // Sair
+		case menuActionQuit:
 			return m, tea.Quit
+		case menuActionMigration, menuActionSettings:
+			// Em breve
+			return m, nil
 		default:
-			// Features not implemented yet
 			return m, nil
 		}
 
@@ -381,6 +487,30 @@ func (m *Model) loadPackages(category types.PackageCategory) {
 		packages = []entities.Package{}
 	}
 
+	m.setPackageList(packages, category, nil)
+}
+
+// loadPackagesFromCategories loads packages from multiple categories (e.g. IDE + Zsh core for Instaladores)
+func (m *Model) loadPackagesFromCategories(categories []types.PackageCategory) {
+	packages, err := m.installerService.GetPackagesByCategories(categories)
+	if err != nil {
+		packages = []entities.Package{}
+	}
+
+	categoryNames := map[types.PackageCategory]string{
+		types.PackageCategoryIDE:     "💻 IDEs e Editores",
+		types.PackageCategoryTool:    "🔧 Ferramentas de Desenvolvimento",
+		types.PackageCategoryApp:     "📱 Aplicações",
+		types.PackageCategoryZshCore: "🐚 Componentes Core (Zsh)",
+	}
+	title := "📦 Instaladores"
+	if len(categories) == 1 {
+		title = categoryNames[categories[0]]
+	}
+	m.setPackageList(packages, categories[0], &title)
+}
+
+func (m *Model) setPackageList(packages []entities.Package, category types.PackageCategory, titleOverride *string) {
 	items := make([]list.Item, len(packages))
 	for i, pkg := range packages {
 		items[i] = packageItem{pkg: pkg}
@@ -390,12 +520,16 @@ func (m *Model) loadPackages(category types.PackageCategory) {
 	m.packageList = list.New(items, delegate, m.width, m.height-4)
 
 	categoryNames := map[types.PackageCategory]string{
-		types.PackageCategoryIDE:  "💻 IDEs e Editores",
-		types.PackageCategoryTool: "🔧 Ferramentas de Desenvolvimento",
-		types.PackageCategoryApp:  "📱 Aplicações",
+		types.PackageCategoryIDE:     "💻 IDEs e Editores",
+		types.PackageCategoryTool:    "🔧 Ferramentas de Desenvolvimento",
+		types.PackageCategoryApp:     "📱 Aplicações",
+		types.PackageCategoryZshCore: "🐚 Componentes Core (Zsh)",
 	}
-
-	m.packageList.Title = categoryNames[category]
+	if titleOverride != nil {
+		m.packageList.Title = *titleOverride
+	} else {
+		m.packageList.Title = categoryNames[category]
+	}
 	m.packageList.SetShowStatusBar(false)
 }
 
@@ -428,6 +562,9 @@ func (m Model) View() string {
 			return m.zshWizard.View()
 		}
 		return "Iniciando wizard..."
+
+	case ViewZshApplying:
+		return m.renderZshApplyFeedback()
 
 	default:
 		return "Executando..."
@@ -575,5 +712,51 @@ func installPackage(service *services.InstallerService, packageID string) tea.Cm
 		}
 
 		return installCompleteMsg{err: nil}
+	}
+}
+
+// applyZshConfigCmd runs ConfigService.ApplyConfig and sends zshApplyResultMsg
+func applyZshConfigCmd(configService *services.ConfigService, selections interfaces.ConfigSelections) tea.Cmd {
+	return func() tea.Msg {
+		err := configService.ApplyConfig(selections)
+		return zshApplyResultMsg{Err: err}
+	}
+}
+
+// renderZshApplyFeedback renders the Zsh apply state (applying / success / error)
+func (m Model) renderZshApplyFeedback() string {
+	title := titleStyle.Render("Configuração Zsh")
+
+	switch m.zshApplyPhase {
+	case "applying":
+		status := fmt.Sprintf("%s Aplicando configuração Zsh...", m.spinner.View())
+		content := title + "\n\n" + status + "\n\n" + helpStyle.Render("Aguarde...")
+		box := confirmBoxStyle.Render(content)
+		return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, box)
+	case "success":
+		content := title + "\n\n" +
+			"✅ Configuração aplicada com sucesso.\n\n" +
+			"O arquivo ~/.zshrc foi atualizado com os plugins e ferramentas selecionados.\n" +
+			"Criados/atualizados: ~/.zsh/general/aliases.zsh e functions.zsh.\n\n" +
+			"Verifique: cat ~/.zshrc\n\n" +
+			"Não instala plugins externos (ex.: zsh-autosuggestions); apenas escreve o .zshrc.\n" +
+			"Use Instaladores para Zsh/Oh My Zsh se ainda não estiverem instalados.\n\n" +
+			helpStyle.Render("Retornando ao menu em 2s (ou Enter/Esc para voltar)")
+		box := confirmBoxStyle.Render(content)
+		return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, box)
+	case "error":
+		errMsg := ""
+		if m.zshApplyError != nil {
+			errMsg = m.zshApplyError.Error()
+		}
+		content := title + "\n\n" +
+			"❌ Erro ao aplicar configuração:\n\n" + errMsg + "\n\n" +
+			helpStyle.Render("Pressione Enter ou Esc para voltar ao menu")
+		box := confirmBoxStyle.Render(content)
+		return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, box)
+	default:
+		content := title + "\n\n" + m.spinner.View() + " Aguarde..."
+		box := confirmBoxStyle.Render(content)
+		return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, box)
 	}
 }

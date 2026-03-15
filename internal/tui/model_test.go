@@ -1,10 +1,12 @@
 package tui
 
 import (
+	"fmt"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jaime/mysystem/internal/app/services"
+	"github.com/jaime/mysystem/internal/infrastructure/config"
 	"github.com/jaime/mysystem/internal/infrastructure/executor"
 	"github.com/jaime/mysystem/internal/infrastructure/installer"
 	"github.com/jaime/mysystem/internal/infrastructure/repository"
@@ -20,7 +22,10 @@ func testModel() Model {
 	packageInstaller := installer.NewDefaultPackageInstaller()
 	installerService := services.NewInstallerService(packageRepo, packageInstaller)
 
-	return NewModel(scriptService, installerService)
+	configManager := config.NewFileConfigManager("")
+	configService := services.NewConfigService(configManager)
+
+	return NewModel(scriptService, installerService, configService)
 }
 
 func TestNewModel(t *testing.T) {
@@ -31,8 +36,9 @@ func TestNewModel(t *testing.T) {
 	}
 
 	items := model.mainMenu.Items()
-	if len(items) != 7 {
-		t.Errorf("Expected 7 main menu items, got %d", len(items))
+	// 6 items when zsh core not installed: Limpeza, Monitoramento, Instaladores, Migração, Configurações, Sair
+	if len(items) != 6 {
+		t.Errorf("Expected 6 main menu items (zsh core not installed), got %d", len(items))
 	}
 
 	if model.scriptService == nil {
@@ -62,6 +68,9 @@ func TestViewStates(t *testing.T) {
 	}
 	if ViewZshWizard != 6 {
 		t.Errorf("ViewZshWizard should be 6, got %d", ViewZshWizard)
+	}
+	if ViewZshApplying != 7 {
+		t.Errorf("ViewZshApplying should be 7, got %d", ViewZshApplying)
 	}
 }
 
@@ -207,6 +216,150 @@ func TestModelStateTransitions(t *testing.T) {
 }
 
 // Benchmark tests
+// noOpMsg is a message that falls through Update's switch so the wizard delegate block runs
+type noOpMsg struct{}
+
+// TestZshWizardDoneTriggersApply tests that when the wizard completes (done, not cancelled),
+// the model transitions to ViewZshApplying and returns the apply Cmd.
+func TestZshWizardDoneTriggersApply(t *testing.T) {
+	model := testModel()
+	wizardService := services.NewWizardService()
+	wizard := NewZshWizardModel(wizardService)
+	wizard.width = 80
+	wizard.height = 24
+
+	// Advance wizard to Review (Plugins -> Tools -> ProjectConfig -> Review): 3x 'n', then Enter
+	for i := 0; i < 3; i++ {
+		var next tea.Model
+		next, _ = wizard.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
+		wizard = next.(ZshWizardModel)
+	}
+	// Confirm on Review (Enter) so wizard is done
+	{
+		var next tea.Model
+		next, _ = wizard.Update(tea.KeyMsg{Type: tea.KeyEnter})
+		wizard = next.(ZshWizardModel)
+	}
+	if !wizard.IsDone() {
+		t.Fatal("wizard should be done after Enter on Review")
+	}
+
+	model.state = ViewZshWizard
+	model.zshWizard = &wizard
+	model.width = 80
+	model.height = 24
+
+	// Use a message that falls through the switch so we reach the wizard delegate block
+	updated, cmd := model.Update(noOpMsg{})
+	m := updated.(Model)
+
+	if m.state != ViewZshApplying {
+		t.Errorf("state = %d, want ViewZshApplying (%d)", m.state, ViewZshApplying)
+	}
+	if m.zshApplyPhase != "applying" {
+		t.Errorf("zshApplyPhase = %q, want \"applying\"", m.zshApplyPhase)
+	}
+	if cmd == nil {
+		t.Error("expected non-nil Cmd (apply config)")
+	}
+}
+
+// TestZshWizardCancelledDoesNotApply tests that when the wizard is cancelled, we return to main menu.
+func TestZshWizardCancelledDoesNotApply(t *testing.T) {
+	model := testModel()
+	wizardService := services.NewWizardService()
+	wizard := NewZshWizardModel(wizardService)
+	wizard.width = 80
+	wizard.height = 24
+	wizard.cancelled = true
+	wizard.done = true
+
+	model.state = ViewZshWizard
+	model.zshWizard = &wizard
+
+	updated, _ := model.Update(noOpMsg{})
+	m := updated.(Model)
+
+	if m.state != ViewMainMenu {
+		t.Errorf("state = %d, want ViewMainMenu", m.state)
+	}
+	if m.zshWizard != nil {
+		t.Error("zshWizard should be nil after cancel")
+	}
+}
+
+// TestZshApplyResultSuccess tests that zshApplyResultMsg with nil error sets success and schedules return.
+func TestZshApplyResultSuccess(t *testing.T) {
+	model := testModel()
+	model.state = ViewZshApplying
+	model.zshApplyPhase = "applying"
+
+	updated, cmd := model.Update(zshApplyResultMsg{Err: nil})
+	m := updated.(Model)
+
+	if m.zshApplyPhase != "success" {
+		t.Errorf("zshApplyPhase = %q, want \"success\"", m.zshApplyPhase)
+	}
+	if m.zshApplyError != nil {
+		t.Errorf("zshApplyError = %v, want nil", m.zshApplyError)
+	}
+	if cmd == nil {
+		t.Error("expected non-nil Cmd (tick to return to menu)")
+	}
+}
+
+// TestZshApplyResultError tests that zshApplyResultMsg with error sets error phase.
+func TestZshApplyResultError(t *testing.T) {
+	model := testModel()
+	model.state = ViewZshApplying
+	model.zshApplyPhase = "applying"
+	err := fmt.Errorf("test apply error")
+
+	updated, _ := model.Update(zshApplyResultMsg{Err: err})
+	m := updated.(Model)
+
+	if m.zshApplyPhase != "error" {
+		t.Errorf("zshApplyPhase = %q, want \"error\"", m.zshApplyPhase)
+	}
+	if m.zshApplyError != err {
+		t.Errorf("zshApplyError = %v, want %v", m.zshApplyError, err)
+	}
+}
+
+// TestZshApplyReturnToMenuMsg tests that zshApplyReturnToMenuMsg clears state and returns to main menu.
+func TestZshApplyReturnToMenuMsg(t *testing.T) {
+	model := testModel()
+	model.state = ViewZshApplying
+	model.zshApplyPhase = "success"
+
+	updated, _ := model.Update(zshApplyReturnToMenuMsg{})
+	m := updated.(Model)
+
+	if m.state != ViewMainMenu {
+		t.Errorf("state = %d, want ViewMainMenu", m.state)
+	}
+	if m.zshApplyPhase != "" {
+		t.Errorf("zshApplyPhase = %q, want empty", m.zshApplyPhase)
+	}
+	if m.zshApplyError != nil {
+		t.Errorf("zshApplyError should be nil after return")
+	}
+}
+
+// TestZshApplyResultStateEnterReturnsToMenu tests that Enter in success/error phase returns to menu.
+func TestZshApplyResultStateEnterReturnsToMenu(t *testing.T) {
+	model := testModel()
+	model.state = ViewZshApplying
+	model.zshApplyPhase = "success"
+
+	updated, _ := model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m := updated.(Model)
+
+	if m.state != ViewMainMenu {
+		t.Errorf("state = %d, want ViewMainMenu after Enter", m.state)
+	}
+}
+
 func BenchmarkNewModel(b *testing.B) {
 	scriptRepo := repository.NewInMemoryScriptRepository()
 	scriptExec := executor.NewBashExecutor()
@@ -216,9 +369,12 @@ func BenchmarkNewModel(b *testing.B) {
 	packageInstaller := installer.NewDefaultPackageInstaller()
 	installerService := services.NewInstallerService(packageRepo, packageInstaller)
 
+	configManager := config.NewFileConfigManager("")
+	configService := services.NewConfigService(configManager)
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		NewModel(scriptService, installerService)
+		NewModel(scriptService, installerService, configService)
 	}
 }
 
