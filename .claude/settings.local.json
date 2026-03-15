@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mv:*)",
+      "Bash(go mod init:*)",
+      "Bash(tree:*)",
+      "Bash(make test:*)",
+      "Bash(make test-coverage:*)",
+      "Bash(make build:*)",
+      "Bash(go mod tidy:*)",
+      "Bash(make clean:*)",
+      "Bash(xargs:*)",
+      "Bash(cat:*)",
+      "Bash(go test:*)",
+      "Bash(go tool cover:*)",
+      "Bash(go get:*)",
+      "Bash(go build:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
