@@ -41,11 +41,6 @@ func NewWizardService() *WizardService {
 				Required:    false,
 			},
 			{
-				Name:        "Project Configuration",
-				Description: "Include project-specific configurations",
-				Required:    false,
-			},
-			{
 				Name:        "Review & Confirm",
 				Description: "Review your selections and apply configuration",
 				Required:    true,
@@ -59,13 +54,12 @@ func (ws *WizardService) CreateNewWizard() *WizardState {
 	return &WizardState{
 		CurrentStep: 0,
 		Selections: interfaces.ConfigSelections{
-			CoreComponents:       make([]string, 0),
-			Plugins:              make([]string, 0),
-			Tools:                make([]string, 0),
-			IncludeProjectConfig: false,
-			CustomAliases:        make(map[string]string),
-			CustomFunctions:      make(map[string]string),
-			CustomEnvVars:        make(map[string]string),
+			CoreComponents:  make([]string, 0),
+			Plugins:         make([]string, 0),
+			Tools:           make([]string, 0),
+			CustomAliases:   make(map[string]string),
+			CustomFunctions: make(map[string]string),
+			CustomEnvVars:   make(map[string]string),
 		},
 		Completed: false,
 	}
@@ -145,11 +139,6 @@ func (ws *WizardService) RemoveTool(state *WizardState, tool string) {
 	state.Selections.Tools = removeFromSlice(state.Selections.Tools, tool)
 }
 
-// SetIncludeProjectConfig sets whether to include project configs
-func (ws *WizardService) SetIncludeProjectConfig(state *WizardState, include bool) {
-	state.Selections.IncludeProjectConfig = include
-}
-
 // GeneratePreview generates a preview of the configuration
 func (ws *WizardService) GeneratePreview(state *WizardState) string {
 	var builder strings.Builder
@@ -187,10 +176,6 @@ func (ws *WizardService) GeneratePreview(state *WizardState) string {
 	} else {
 		builder.WriteString("  (none selected)\n")
 	}
-	builder.WriteString("\n")
-
-	// Project Config
-	builder.WriteString(fmt.Sprintf("Include Project Config: %t\n", state.Selections.IncludeProjectConfig))
 
 	return builder.String()
 }
@@ -218,13 +203,12 @@ func (ws *WizardService) GetProgress(state *WizardState) int {
 func (ws *WizardService) Reset(state *WizardState) {
 	state.CurrentStep = 0
 	state.Selections = interfaces.ConfigSelections{
-		CoreComponents:       make([]string, 0),
-		Plugins:              make([]string, 0),
-		Tools:                make([]string, 0),
-		IncludeProjectConfig: false,
-		CustomAliases:        make(map[string]string),
-		CustomFunctions:      make(map[string]string),
-		CustomEnvVars:        make(map[string]string),
+		CoreComponents:  make([]string, 0),
+		Plugins:         make([]string, 0),
+		Tools:           make([]string, 0),
+		CustomAliases:   make(map[string]string),
+		CustomFunctions: make(map[string]string),
+		CustomEnvVars:   make(map[string]string),
 	}
 	state.Completed = false
 }

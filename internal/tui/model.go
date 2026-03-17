@@ -21,12 +21,14 @@ type ViewState int
 const (
 	ViewMainMenu ViewState = iota
 	ViewScriptList
+	ViewInstallerCategories
 	ViewPackageList
 	ViewConfirmation
 	ViewExecuting
 	ViewInstalling
 	ViewZshWizard
 	ViewZshApplying
+	ViewZshRepoWizard
 )
 
 // Model is the main TUI model
@@ -34,9 +36,11 @@ type Model struct {
 	scriptService    *services.ScriptService
 	installerService *services.InstallerService
 	configService    *services.ConfigService
+	repoService      *services.RepoService
 	state            ViewState
 	mainMenu         list.Model
 	scriptList       list.Model
+	installerList    list.Model
 	packageList      list.Model
 	selectedMenu     int
 	selectedItem     interface{} // Can be Script or Package
@@ -54,10 +58,13 @@ type Model struct {
 	canAbort       bool
 	aborted        bool
 
-	// Zsh wizard
+	// Zsh plugins wizard (Plugins e temas Zsh)
 	zshWizard *ZshWizardModel
 
-	// Zsh core: when true, "Configurar Zsh" is shown in menu (oh-my-zsh installed)
+	// Zsh repo wizard (Configurar Zsh - backup/migração via repositório)
+	zshRepoWizard *ZshRepoModel
+
+	// Zsh core: when true, "Plugins e temas Zsh" is shown in menu (oh-my-zsh installed)
 	zshCoreInstalled bool
 	zshCoreChecked   bool
 
@@ -66,15 +73,15 @@ type Model struct {
 	zshApplyError error
 }
 
-// menuAction identifies the main menu action (for dynamic menu with optional "Configurar Zsh")
+// menuAction identifies the main menu action
 const (
-	menuActionCleanup     = "cleanup"
-	menuActionMonitoring  = "monitoring"
-	menuActionInstallers  = "installers"
-	menuActionZshConfig   = "zsh_config"
-	menuActionMigration  = "migration"
-	menuActionSettings    = "settings"
-	menuActionQuit       = "quit"
+	menuActionCleanup      = "cleanup"
+	menuActionMonitoring   = "monitoring"
+	menuActionInstallers   = "installers"
+	menuActionZshPlugins   = "zsh_plugins"   // Plugins e temas Zsh (wizard local)
+	menuActionZshRepo   = "zsh_repo"   // Configurar Zsh (repo backup/migração)
+	menuActionSettings  = "settings"
+	menuActionQuit         = "quit"
 )
 
 // menuItem represents a menu option
@@ -105,6 +112,17 @@ type packageItem struct {
 func (i packageItem) Title() string       { return i.pkg.Name }
 func (i packageItem) Description() string { return i.pkg.Description }
 func (i packageItem) FilterValue() string { return i.pkg.Name }
+
+// installerCategoryItem represents a logical group of packages (e.g. IDEs, Terminais)
+type installerCategoryItem struct {
+	title      string
+	desc       string
+	categories []types.PackageCategory
+}
+
+func (i installerCategoryItem) Title() string       { return i.title }
+func (i installerCategoryItem) Description() string { return i.desc }
+func (i installerCategoryItem) FilterValue() string { return i.title }
 
 // progressMsg is sent when installation progress updates
 type progressMsg interfaces.InstallProgress
@@ -157,7 +175,7 @@ var (
 			Padding(0, 1)
 )
 
-// getMainMenuItems returns menu items; "Configurar Zsh" only when zsh core is installed
+// getMainMenuItems returns menu items; "Plugins e temas Zsh" only when zsh core is installed; "Configurar Zsh" always
 func getMainMenuItems(zshCoreInstalled bool) []list.Item {
 	items := []list.Item{
 		menuItem{title: "🧹 Limpeza do Sistema", desc: "Scripts de limpeza e manutenção", action: menuActionCleanup},
@@ -165,10 +183,10 @@ func getMainMenuItems(zshCoreInstalled bool) []list.Item {
 		menuItem{title: "📦 Instaladores", desc: "Instalar ferramentas e aplicações (IDEs, Zsh, Oh My Zsh, etc.)", action: menuActionInstallers},
 	}
 	if zshCoreInstalled {
-		items = append(items, menuItem{title: "⚙️  Configurar Zsh", desc: "Plugins, temas e .zshrc", action: menuActionZshConfig})
+		items = append(items, menuItem{title: "🔧 Plugins e temas Zsh", desc: "Plugins, temas e .zshrc local", action: menuActionZshPlugins})
 	}
 	items = append(items,
-		menuItem{title: "🔄 Migração", desc: "Exportar/Importar configurações (em breve)", action: menuActionMigration},
+		menuItem{title: "⚙️  Configurar Zsh", desc: "Repositório de config: backup e migração entre máquinas", action: menuActionZshRepo},
 		menuItem{title: "⚙️  Configurações", desc: "Configurar a ferramenta (em breve)", action: menuActionSettings},
 		menuItem{title: "❌ Sair", desc: "Fechar Homestead", action: menuActionQuit},
 	)
@@ -176,7 +194,7 @@ func getMainMenuItems(zshCoreInstalled bool) []list.Item {
 }
 
 // NewModel creates the TUI model with dependencies injected
-func NewModel(scriptService *services.ScriptService, installerService *services.InstallerService, configService *services.ConfigService) Model {
+func NewModel(scriptService *services.ScriptService, installerService *services.InstallerService, configService *services.ConfigService, repoService *services.RepoService) Model {
 	mainItems := getMainMenuItems(false) // will refresh when zsh core check completes
 	mainList := list.New(mainItems, list.NewDefaultDelegate(), 0, 0)
 	mainList.Title = "Homestead - Gerenciador de Sistema"
@@ -194,6 +212,7 @@ func NewModel(scriptService *services.ScriptService, installerService *services.
 		scriptService:    scriptService,
 		installerService: installerService,
 		configService:    configService,
+		repoService:      repoService,
 		state:            ViewMainMenu,
 		mainMenu:         mainList,
 		progress:         prog,
@@ -224,6 +243,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.mainMenu.SetSize(msg.Width, msg.Height-4)
 		if m.scriptList.Items() != nil {
 			m.scriptList.SetSize(msg.Width, msg.Height-4)
+		}
+		if m.installerList.Items() != nil {
+			m.installerList.SetSize(msg.Width, msg.Height-4)
 		}
 		if m.packageList.Items() != nil {
 			m.packageList.SetSize(msg.Width, msg.Height-4)
@@ -286,9 +308,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, nil
 				}
 			case "esc":
-				if m.state == ViewScriptList || m.state == ViewPackageList || m.state == ViewConfirmation {
+				switch m.state {
+				case ViewScriptList, ViewConfirmation:
 					m.state = ViewMainMenu
 					m.confirmYes = false
+					return m, nil
+				case ViewPackageList:
+					// Volta para as categorias de instaladores
+					m.state = ViewInstallerCategories
+					return m, nil
+				case ViewInstallerCategories:
+					m.state = ViewMainMenu
 					return m, nil
 				}
 			case "left", "h":
@@ -355,6 +385,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	}
 
+	// Delegate to ZshRepoWizard when in repo wizard state
+	if m.state == ViewZshRepoWizard && m.zshRepoWizard != nil {
+		newRepo, cmd := m.zshRepoWizard.Update(msg)
+		repoWizard := newRepo.(ZshRepoModel)
+		m.zshRepoWizard = &repoWizard
+
+		if repoWizard.IsDone() || repoWizard.IsCancelled() {
+			m.state = ViewMainMenu
+			m.zshRepoWizard = nil
+			return m, cmd
+		}
+		return m, cmd
+	}
+
 	// Update the appropriate list based on state
 	var cmd tea.Cmd
 	switch m.state {
@@ -362,6 +406,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.mainMenu, cmd = m.mainMenu.Update(msg)
 	case ViewScriptList:
 		m.scriptList, cmd = m.scriptList.Update(msg)
+	case ViewInstallerCategories:
+		m.installerList, cmd = m.installerList.Update(msg)
 	case ViewPackageList:
 		m.packageList, cmd = m.packageList.Update(msg)
 	}
@@ -388,19 +434,25 @@ func (m Model) handleEnter() (tea.Model, tea.Cmd) {
 			m.selectedMenu = 1
 			m.loadScripts(types.CategoryMonitoring)
 		case menuActionInstallers:
-			m.state = ViewPackageList
+			m.state = ViewInstallerCategories
 			m.selectedMenu = 2
-			m.loadPackagesFromCategories([]types.PackageCategory{types.PackageCategoryIDE, types.PackageCategoryZshCore})
-		case menuActionZshConfig:
+			m.loadInstallerCategories()
+		case menuActionZshPlugins:
 			m.state = ViewZshWizard
 			wizardService := services.NewWizardService()
 			wizard := NewZshWizardModel(wizardService)
 			wizard.width = m.width
 			wizard.height = m.height
 			m.zshWizard = &wizard
+		case menuActionZshRepo:
+			m.state = ViewZshRepoWizard
+			repoWizard := NewZshRepoModel(m.repoService, m.configService)
+			repoWizard.width = m.width
+			repoWizard.height = m.height
+			m.zshRepoWizard = &repoWizard
 		case menuActionQuit:
 			return m, tea.Quit
-		case menuActionMigration, menuActionSettings:
+		case menuActionSettings:
 			// Em breve
 			return m, nil
 		default:
@@ -423,6 +475,14 @@ func (m Model) handleEnter() (tea.Model, tea.Cmd) {
 			m.selectedItem = pkgItem.pkg
 			m.state = ViewConfirmation
 			m.confirmYes = false
+		}
+
+	case ViewInstallerCategories:
+		// Ao escolher uma categoria, carregamos a lista de pacotes
+		selected := m.installerList.SelectedItem()
+		if catItem, ok := selected.(installerCategoryItem); ok && len(catItem.categories) > 0 {
+			m.state = ViewPackageList
+			m.loadPackagesFromCategories(catItem.categories)
 		}
 
 	case ViewConfirmation:
@@ -498,12 +558,16 @@ func (m *Model) loadPackagesFromCategories(categories []types.PackageCategory) {
 	}
 
 	categoryNames := map[types.PackageCategory]string{
-		types.PackageCategoryIDE:     "💻 IDEs e Editores",
-		types.PackageCategoryTool:    "🔧 Ferramentas de Desenvolvimento",
-		types.PackageCategoryApp:     "📱 Aplicações",
-		types.PackageCategoryZshCore: "🐚 Componentes Core (Zsh)",
+		types.PackageCategoryIDE:      "💻 IDEs e Editores",
+		types.PackageCategoryTool:     "🔧 Ferramentas de Desenvolvimento",
+		types.PackageCategoryApp:      "📱 Aplicações",
+		types.PackageCategoryZshCore:  "🐚 Componentes Core (Zsh)",
+		types.PackageCategoryTerminal: "🖥️ Emuladores de Terminal",
+		types.PackageCategoryShell:    "🐚 Shells Alternativos",
+		types.PackageCategoryAI:       "🤖 Integração com IA",
+		types.PackageCategoryGames:    "🎮 Games",
 	}
-	title := "📦 Instaladores"
+	title := "📦 Instaladores (IDEs, Shells, Terminais, IA)"
 	if len(categories) == 1 {
 		title = categoryNames[categories[0]]
 	}
@@ -520,10 +584,14 @@ func (m *Model) setPackageList(packages []entities.Package, category types.Packa
 	m.packageList = list.New(items, delegate, m.width, m.height-4)
 
 	categoryNames := map[types.PackageCategory]string{
-		types.PackageCategoryIDE:     "💻 IDEs e Editores",
-		types.PackageCategoryTool:    "🔧 Ferramentas de Desenvolvimento",
-		types.PackageCategoryApp:     "📱 Aplicações",
-		types.PackageCategoryZshCore: "🐚 Componentes Core (Zsh)",
+		types.PackageCategoryIDE:      "💻 IDEs e Editores",
+		types.PackageCategoryTool:     "🔧 Ferramentas de Desenvolvimento",
+		types.PackageCategoryApp:      "📱 Aplicações",
+		types.PackageCategoryZshCore:  "🐚 Componentes Core (Zsh)",
+		types.PackageCategoryTerminal: "🖥️ Emuladores de Terminal",
+		types.PackageCategoryShell:    "🐚 Shells Alternativos",
+		types.PackageCategoryAI:       "🤖 Integração com IA",
+		types.PackageCategoryGames:    "🎮 Games",
 	}
 	if titleOverride != nil {
 		m.packageList.Title = *titleOverride
@@ -531,6 +599,73 @@ func (m *Model) setPackageList(packages []entities.Package, category types.Packa
 		m.packageList.Title = categoryNames[category]
 	}
 	m.packageList.SetShowStatusBar(false)
+}
+
+// loadInstallerCategories inicializa a lista de categorias dentro de "Instaladores"
+func (m *Model) loadInstallerCategories() {
+	items := []list.Item{
+		installerCategoryItem{
+			title: "💻 IDEs & Dev (CLI)",
+			desc:  "VS Code, Cursor, Claude Code, Antigravity e afins",
+			categories: []types.PackageCategory{
+				types.PackageCategoryIDE,
+			},
+		},
+		installerCategoryItem{
+			title: "📱 Aplicações",
+			desc:  "Google Chrome, Insomnia e outras aplicações",
+			categories: []types.PackageCategory{
+				types.PackageCategoryApp,
+			},
+		},
+		installerCategoryItem{
+			title: "🔧 Ferramentas de desenvolvimento",
+			desc:  "GitHub CLI (gh), NVM, Bun, pnpm, Deno e afins",
+			categories: []types.PackageCategory{
+				types.PackageCategoryTool,
+			},
+		},
+		installerCategoryItem{
+			title: "🐚 Shells alternativos",
+			desc:  "Fish Shell e futuros shells opcionais",
+			categories: []types.PackageCategory{
+				types.PackageCategoryShell,
+			},
+		},
+		installerCategoryItem{
+			title: "🖥️ Emuladores de Terminal",
+			desc:  "WezTerm (recomendado), Kitty, Alacritty, Warp, Wave Terminal",
+			categories: []types.PackageCategory{
+				types.PackageCategoryTerminal,
+			},
+		},
+		installerCategoryItem{
+			title: "🐚 Componentes Core (Zsh)",
+			desc:  "Zsh, Oh My Zsh, Powerlevel10k",
+			categories: []types.PackageCategory{
+				types.PackageCategoryZshCore,
+			},
+		},
+		installerCategoryItem{
+			title: "🎮 Games",
+			desc:  "Prism Launcher, Lutris",
+			categories: []types.PackageCategory{
+				types.PackageCategoryGames,
+			},
+		},
+		installerCategoryItem{
+			title: "🤖 Integração com IA (Opcional)",
+			desc:  "ShellGPT (qualquer shell), Fish-AI (Fish). Warp já vem com IA embutida.",
+			categories: []types.PackageCategory{
+				types.PackageCategoryAI,
+			},
+		},
+	}
+
+	delegate := list.NewDefaultDelegate()
+	m.installerList = list.New(items, delegate, m.width, m.height-4)
+	m.installerList.Title = "📦 Instaladores"
+	m.installerList.SetShowStatusBar(false)
 }
 
 // View renders the UI
@@ -546,6 +681,10 @@ func (m Model) View() string {
 	case ViewScriptList:
 		help := helpStyle.Render("\n↑/↓: navegar • enter: executar • esc: voltar • q: sair")
 		return m.scriptList.View() + help
+
+	case ViewInstallerCategories:
+		help := helpStyle.Render("\n↑/↓: navegar • enter: abrir categoria • esc: voltar • q: sair")
+		return m.installerList.View() + help
 
 	case ViewPackageList:
 		help := helpStyle.Render("\n↑/↓: navegar • enter: instalar • esc: voltar • q: sair")
@@ -565,6 +704,12 @@ func (m Model) View() string {
 
 	case ViewZshApplying:
 		return m.renderZshApplyFeedback()
+
+	case ViewZshRepoWizard:
+		if m.zshRepoWizard != nil {
+			return m.zshRepoWizard.View()
+		}
+		return "Iniciando Configurar Zsh..."
 
 	default:
 		return "Executando..."

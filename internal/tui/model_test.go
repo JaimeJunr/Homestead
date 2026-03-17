@@ -25,7 +25,7 @@ func testModel() Model {
 	configManager := config.NewFileConfigManager("")
 	configService := services.NewConfigService(configManager)
 
-	return NewModel(scriptService, installerService, configService)
+	return NewModel(scriptService, installerService, configService, nil)
 }
 
 func TestNewModel(t *testing.T) {
@@ -36,7 +36,7 @@ func TestNewModel(t *testing.T) {
 	}
 
 	items := model.mainMenu.Items()
-	// 6 items when zsh core not installed: Limpeza, Monitoramento, Instaladores, Migração, Configurações, Sair
+	// 6 items when zsh core not installed: Limpeza, Monitoramento, Instaladores, Configurar Zsh, Configurações, Sair
 	if len(items) != 6 {
 		t.Errorf("Expected 6 main menu items (zsh core not installed), got %d", len(items))
 	}
@@ -54,23 +54,26 @@ func TestViewStates(t *testing.T) {
 	if ViewScriptList != 1 {
 		t.Errorf("ViewScriptList should be 1, got %d", ViewScriptList)
 	}
-	if ViewPackageList != 2 {
-		t.Errorf("ViewPackageList should be 2, got %d", ViewPackageList)
+	if ViewInstallerCategories != 2 {
+		t.Errorf("ViewInstallerCategories should be 2, got %d", ViewInstallerCategories)
 	}
-	if ViewConfirmation != 3 {
-		t.Errorf("ViewConfirmation should be 3, got %d", ViewConfirmation)
+	if ViewPackageList != 3 {
+		t.Errorf("ViewPackageList should be 3, got %d", ViewPackageList)
 	}
-	if ViewExecuting != 4 {
-		t.Errorf("ViewExecuting should be 4, got %d", ViewExecuting)
+	if ViewConfirmation != 4 {
+		t.Errorf("ViewConfirmation should be 4, got %d", ViewConfirmation)
 	}
-	if ViewInstalling != 5 {
-		t.Errorf("ViewInstalling should be 5, got %d", ViewInstalling)
+	if ViewExecuting != 5 {
+		t.Errorf("ViewExecuting should be 5, got %d", ViewExecuting)
 	}
-	if ViewZshWizard != 6 {
-		t.Errorf("ViewZshWizard should be 6, got %d", ViewZshWizard)
+	if ViewInstalling != 6 {
+		t.Errorf("ViewInstalling should be 6, got %d", ViewInstalling)
 	}
-	if ViewZshApplying != 7 {
-		t.Errorf("ViewZshApplying should be 7, got %d", ViewZshApplying)
+	if ViewZshWizard != 7 {
+		t.Errorf("ViewZshWizard should be 7, got %d", ViewZshWizard)
+	}
+	if ViewZshApplying != 8 {
+		t.Errorf("ViewZshApplying should be 8, got %d", ViewZshApplying)
 	}
 }
 
@@ -374,7 +377,7 @@ func BenchmarkNewModel(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		NewModel(scriptService, installerService, configService)
+		NewModel(scriptService, installerService, configService, nil)
 	}
 }
 

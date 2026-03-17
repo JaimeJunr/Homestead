@@ -182,24 +182,6 @@ func TestWizardService_AddTool(t *testing.T) {
 	}
 }
 
-// TestWizardService_SetIncludeProjectConfig tests project config inclusion
-func TestWizardService_SetIncludeProjectConfig(t *testing.T) {
-	service := NewWizardService()
-	wizard := service.CreateNewWizard()
-
-	service.SetIncludeProjectConfig(wizard, true)
-
-	if !wizard.Selections.IncludeProjectConfig {
-		t.Error("IncludeProjectConfig should be true")
-	}
-
-	service.SetIncludeProjectConfig(wizard, false)
-
-	if wizard.Selections.IncludeProjectConfig {
-		t.Error("IncludeProjectConfig should be false")
-	}
-}
-
 // TestWizardService_GeneratePreview tests generating configuration preview
 func TestWizardService_GeneratePreview(t *testing.T) {
 	service := NewWizardService()

@@ -11,7 +11,8 @@ Homestead brings together system cleanup scripts, dev tool installers, and shell
 - **System Cleanup** — Run maintenance scripts for Docker, npm, apt caches, and large file detection
 - **System Monitoring** — Check battery health and memory usage at a glance
 - **Package Installers** — Install IDEs (Cursor, Claude Code CLI) and dev tools from a curated list
-- **Zsh Configuration Wizard** — Step-by-step wizard to install and configure Zsh, Oh My Zsh, plugins, and dev tools. Migrates your current shell setup to any new machine
+- **Plugins e temas Zsh** — Wizard local para escolher plugins, ferramentas e gerar `.zshrc` (requer Oh My Zsh instalado)
+- **Configurar Zsh** — Repositório de config (dotfiles): criar novo repo e enviar para a nuvem ou restaurar a partir de um repo existente; ideal para migração entre máquinas
 - **Beautiful TUI** — Keyboard-driven interface built with Bubbletea and Lipgloss
 
 ---
@@ -50,18 +51,10 @@ q or Ctrl+C    Quit
 
 ---
 
-## Zsh Wizard
+## Zsh: two flows
 
-The Zsh wizard is the flagship feature. It guides you through 5 steps to configure your shell environment from scratch:
-
-1. **Core Components** — Zsh, Oh My Zsh, Powerlevel10k theme
-2. **Plugins** — 15 options: git, docker, zsh-autosuggestions, syntax-highlighting, fzf, and more
-3. **Dev Tools** — NVM, Bun, SDKMAN, pnpm, Deno, Angular CLI, OpenVPN3, Homebrew
-4. **Project Config** — Optionally include project-specific aliases and functions
-5. **Review & Apply** — Preview the generated `.zshrc` before committing
-
-Everything is modular — select only what you use, skip what you don't.
-
+- **Plugins e temas Zsh** (menu, when Oh My Zsh is installed): local wizard — Plugins, Dev tools, Review & apply. Generates `.zshrc` and `~/.zsh/general/`; no git.
+- **Configurar Zsh**: repo-based backup and migration. Choose “create new repo” (init, copy dotfiles, push to GitHub/etc.) or “already have repo” (clone/pull, backup, restore). Default dotfiles: `.zshrc`, `~/.zsh/`.
 ---
 
 ## Project Structure

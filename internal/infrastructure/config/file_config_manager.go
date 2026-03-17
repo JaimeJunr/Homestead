@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,19 +16,18 @@ import (
 
 // ZshrcTemplateData holds the data for rendering zshrc.tmpl
 type ZshrcTemplateData struct {
-	GeneratedAt          string
-	HasOhMyZsh           bool
-	HasPowerlevel10k     bool
-	Plugins              []string
-	HasNVM               bool
-	HasBun               bool
-	HasSDKMAN            bool
-	HasPNPM              bool
-	HasDeno              bool
-	HasHomebrew          bool
-	HasPyenv             bool
-	HasCargo             bool
-	IncludeProjectConfig bool
+	GeneratedAt      string
+	HasOhMyZsh       bool
+	HasPowerlevel10k bool
+	Plugins          []string
+	HasNVM           bool
+	HasBun           bool
+	HasSDKMAN        bool
+	HasPNPM          bool
+	HasDeno          bool
+	HasHomebrew      bool
+	HasPyenv         bool
+	HasCargo         bool
 }
 
 // AliasesTemplateData holds the data for rendering aliases.tmpl
@@ -49,6 +49,11 @@ type FileConfigManager struct {
 	configDir string
 	loader    *templates.TemplateLoader
 }
+
+const (
+	homesteadStartMarker = "# --- Homestead managed ---"
+	homesteadEndMarker   = "# --- End Homestead ---"
+)
 
 // NewFileConfigManager creates a new file-based configuration manager
 func NewFileConfigManager(configDir string) interfaces.ConfigManager {
@@ -184,19 +189,18 @@ func (fcm *FileConfigManager) GenerateZshrc(selections interfaces.ConfigSelectio
 	if fcm.loader != nil {
 		plugins := filterInstalledPlugins(homeDir, selections.Plugins)
 		data := ZshrcTemplateData{
-			GeneratedAt:          time.Now().Format(time.RFC3339),
-			HasOhMyZsh:           sliceContains(selections.CoreComponents, "oh-my-zsh"),
-			HasPowerlevel10k:     sliceContains(selections.CoreComponents, "powerlevel10k"),
-			Plugins:              plugins,
-			HasNVM:               sliceContains(selections.Tools, "nvm"),
-			HasBun:               sliceContains(selections.Tools, "bun"),
-			HasSDKMAN:            sliceContains(selections.Tools, "sdkman"),
-			HasPNPM:              sliceContains(selections.Tools, "pnpm"),
-			HasDeno:              sliceContains(selections.Tools, "deno"),
-			HasHomebrew:          sliceContains(selections.Tools, "homebrew"),
-			HasPyenv:             sliceContains(selections.Tools, "pyenv"),
-			HasCargo:             sliceContains(selections.Tools, "cargo"),
-			IncludeProjectConfig: selections.IncludeProjectConfig,
+			GeneratedAt:      time.Now().Format(time.RFC3339),
+			HasOhMyZsh:       sliceContains(selections.CoreComponents, "oh-my-zsh"),
+			HasPowerlevel10k: sliceContains(selections.CoreComponents, "powerlevel10k"),
+			Plugins:          plugins,
+			HasNVM:           sliceContains(selections.Tools, "nvm"),
+			HasBun:           sliceContains(selections.Tools, "bun"),
+			HasSDKMAN:        sliceContains(selections.Tools, "sdkman"),
+			HasPNPM:          sliceContains(selections.Tools, "pnpm"),
+			HasDeno:          sliceContains(selections.Tools, "deno"),
+			HasHomebrew:      sliceContains(selections.Tools, "homebrew"),
+			HasPyenv:          sliceContains(selections.Tools, "pyenv"),
+			HasCargo:          sliceContains(selections.Tools, "cargo"),
 		}
 		return fcm.loader.RenderTemplate("zshrc.tmpl", data)
 	}
@@ -262,14 +266,6 @@ func (fcm *FileConfigManager) GenerateZshrc(selections interfaces.ConfigSelectio
 		builder.WriteString("# Bun\n")
 		builder.WriteString("export BUN_INSTALL=\"$HOME/.bun\"\n")
 		builder.WriteString("export PATH=\"$BUN_INSTALL/bin:$PATH\"\n\n")
-	}
-
-	// Project configs
-	if selections.IncludeProjectConfig {
-		builder.WriteString("# Project-specific configurations\n")
-		builder.WriteString("if [[ -f ~/.zsh/projects/ivt.zsh ]]; then\n")
-		builder.WriteString("  source ~/.zsh/projects/ivt.zsh\n")
-		builder.WriteString("fi\n\n")
 	}
 
 	// Custom aliases
@@ -432,14 +428,29 @@ func (fcm *FileConfigManager) ApplyConfig(selections interfaces.ConfigSelections
 	_ = fcm.BackupExistingConfig()
 
 	// Generate .zshrc
-	zshrcContent, err := fcm.GenerateZshrc(selections)
+	managedBlock, err := fcm.GenerateZshrc(selections)
 	if err != nil {
 		return fmt.Errorf("failed to generate .zshrc: %w", err)
 	}
 
 	// Write .zshrc
 	zshrcPath := filepath.Join(homeDir, ".zshrc")
-	if err := os.WriteFile(zshrcPath, []byte(zshrcContent), 0644); err != nil {
+	existingContent, _ := os.ReadFile(zshrcPath)
+	userContent := stripHomesteadBlock(string(existingContent))
+
+	var builder strings.Builder
+	if strings.TrimSpace(userContent) != "" {
+		builder.WriteString(strings.TrimRight(userContent, "\n"))
+		builder.WriteString("\n\n")
+	}
+	builder.WriteString(homesteadStartMarker)
+	builder.WriteString("\n")
+	builder.WriteString(managedBlock)
+	builder.WriteString("\n")
+	builder.WriteString(homesteadEndMarker)
+	builder.WriteString("\n")
+
+	if err := os.WriteFile(zshrcPath, []byte(builder.String()), 0644); err != nil {
 		return fmt.Errorf("failed to write .zshrc: %w", err)
 	}
 
@@ -449,9 +460,12 @@ func (fcm *FileConfigManager) ApplyConfig(selections interfaces.ConfigSelections
 		return fmt.Errorf("failed to create .zsh/general directory: %w", err)
 	}
 
-	// Create placeholder files for aliases and functions
 	aliasesPath := filepath.Join(generalDir, "aliases.zsh")
-	if _, err := os.Stat(aliasesPath); os.IsNotExist(err) {
+	if len(selections.CustomAliases) > 0 {
+		if err := mergeAliasesFile(aliasesPath, selections.CustomAliases); err != nil {
+			return fmt.Errorf("failed to update aliases.zsh: %w", err)
+		}
+	} else if _, err := os.Stat(aliasesPath); os.IsNotExist(err) {
 		placeholder := "# General aliases - Add your aliases here\n"
 		if err := os.WriteFile(aliasesPath, []byte(placeholder), 0644); err != nil {
 			return fmt.Errorf("failed to write aliases.zsh: %w", err)
@@ -467,6 +481,100 @@ func (fcm *FileConfigManager) ApplyConfig(selections interfaces.ConfigSelections
 	}
 
 	return nil
+}
+
+// stripHomesteadBlock removes the Homestead-managed block from existing .zshrc content,
+// returning only the user-managed portions.
+func stripHomesteadBlock(content string) string {
+	start := strings.Index(content, homesteadStartMarker)
+	if start == -1 {
+		return content
+	}
+	end := strings.Index(content, homesteadEndMarker)
+	if end == -1 {
+		return content
+	}
+	after := end + len(homesteadEndMarker)
+	var builder strings.Builder
+	builder.WriteString(content[:start])
+	if after < len(content) {
+		builder.WriteString(content[after:])
+	}
+	return builder.String()
+}
+
+// mergeAliasesFile merges the provided aliases into aliases.zsh, preserving
+// existing non-alias lines and updating/adding alias definitions.
+func mergeAliasesFile(path string, aliases map[string]string) error {
+	existing := make(map[string]string)
+	var lines []string
+
+	file, err := os.Open(path)
+	if err == nil {
+		defer file.Close()
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			line := scanner.Text()
+			name, ok := parseAliasLine(line)
+			if ok {
+				existing[name] = line
+			}
+			lines = append(lines, line)
+		}
+		if err := scanner.Err(); err != nil {
+			return fmt.Errorf("failed to read aliases.zsh: %w", err)
+		}
+	}
+
+	// Replace or append aliases from selections
+	for name, command := range aliases {
+		newLine := fmt.Sprintf("alias %s='%s'", name, command)
+		if _, ok := existing[name]; ok {
+			for i, line := range lines {
+				if aliasName, ok := parseAliasLine(line); ok && aliasName == name {
+					lines[i] = newLine
+				}
+			}
+		} else {
+			lines = append(lines, newLine)
+		}
+	}
+
+	// If file did not exist and still empty, create a simple header
+	if len(lines) == 0 {
+		lines = append(lines, "# General aliases - Generated by Homestead")
+		for name, command := range aliases {
+			lines = append(lines, fmt.Sprintf("alias %s='%s'", name, command))
+		}
+	}
+
+	content := strings.Join(lines, "\n") + "\n"
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return fmt.Errorf("failed to create aliases directory: %w", err)
+	}
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		return fmt.Errorf("failed to write aliases.zsh: %w", err)
+	}
+	return nil
+}
+
+// parseAliasLine tries to extract the alias name from a line like:
+//   alias ll='ls -la'
+func parseAliasLine(line string) (string, bool) {
+	trimmed := strings.TrimSpace(line)
+	if !strings.HasPrefix(trimmed, "alias ") {
+		return "", false
+	}
+	rest := strings.TrimSpace(strings.TrimPrefix(trimmed, "alias "))
+	eq := strings.Index(rest, "=")
+	if eq == -1 {
+		return "", false
+	}
+	name := strings.TrimSpace(rest[:eq])
+	if name == "" {
+		return "", false
+	}
+	return name, true
 }
 
 // Helper function to check if a slice contains a string

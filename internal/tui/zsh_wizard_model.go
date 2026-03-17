@@ -19,7 +19,6 @@ type ZshWizardView int
 const (
 	ZshWizardViewPlugins ZshWizardView = iota
 	ZshWizardViewTools
-	ZshWizardViewProjectConfig
 	ZshWizardViewReview
 )
 
@@ -38,10 +37,9 @@ type ZshWizardModel struct {
 	currentView   ZshWizardView
 
 	// Items for each view
-	coreItems    []WizardItem
-	pluginItems  []WizardItem
-	toolItems    []WizardItem
-	projectItems []WizardItem
+	coreItems   []WizardItem
+	pluginItems []WizardItem
+	toolItems   []WizardItem
 
 	// Current cursor position in list
 	cursor int
@@ -148,13 +146,6 @@ func (m *ZshWizardModel) initItems() {
 		{ID: "openvpn3", Name: "OpenVPN 3", Description: "Cliente VPN moderno"},
 		{ID: "homebrew", Name: "Homebrew", Description: "Gerenciador de pacotes para Linux"},
 	}
-
-	// Project configs
-	m.projectItems = []WizardItem{
-		{ID: "include-project", Name: "Incluir configs de projeto", Description: "Carrega ~/.zsh/projects/ ao iniciar"},
-		{ID: "separate-aliases", Name: "Aliases separados", Description: "Mantém aliases em ~/.zsh/general/aliases.zsh"},
-		{ID: "separate-functions", Name: "Funções separadas", Description: "Mantém funções em ~/.zsh/general/functions.zsh"},
-	}
 }
 
 // Init initializes the model
@@ -204,6 +195,7 @@ func (m ZshWizardModel) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.done = true
 			return m, nil
 		}
+		// Plugins -> Tools -> Review (no Project Config step)
 		if m.currentView < ZshWizardViewReview {
 			m.currentView++
 			_ = m.wizardService.NextStep(m.state)
@@ -279,10 +271,6 @@ func (m *ZshWizardModel) toggleItem(items *[]WizardItem, index int) {
 		} else {
 			m.wizardService.RemoveTool(m.state, item.ID)
 		}
-	case ZshWizardViewProjectConfig:
-		if item.ID == "include-project" {
-			m.wizardService.SetIncludeProjectConfig(m.state, item.Selected)
-		}
 	}
 }
 
@@ -293,8 +281,6 @@ func (m *ZshWizardModel) getCurrentItems() *[]WizardItem {
 		return &m.pluginItems
 	case ZshWizardViewTools:
 		return &m.toolItems
-	case ZshWizardViewProjectConfig:
-		return &m.projectItems
 	}
 	return nil
 }
@@ -316,10 +302,6 @@ func (m *ZshWizardModel) selectAllInCurrentView(items *[]WizardItem) {
 			m.wizardService.AddPlugin(m.state, item.ID)
 		case ZshWizardViewTools:
 			m.wizardService.AddTool(m.state, item.ID)
-		case ZshWizardViewProjectConfig:
-			if item.ID == "include-project" {
-				m.wizardService.SetIncludeProjectConfig(m.state, true)
-			}
 		}
 	}
 }
@@ -338,8 +320,6 @@ func (m ZshWizardModel) View() string {
 		return m.renderSelectionView("Plugins Zsh", "Selecione os plugins que deseja instalar", m.pluginItems)
 	case ZshWizardViewTools:
 		return m.renderSelectionView("Ferramentas de Desenvolvimento", "Selecione as ferramentas de desenvolvimento", m.toolItems)
-	case ZshWizardViewProjectConfig:
-		return m.renderSelectionView("Configurações de Projeto", "Opções de organização de configuração", m.projectItems)
 	case ZshWizardViewReview:
 		return m.renderReviewView()
 	}

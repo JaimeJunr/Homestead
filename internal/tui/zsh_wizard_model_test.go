@@ -136,7 +136,6 @@ func TestZshWizardModel_ViewTransitions(t *testing.T) {
 	views := []ZshWizardView{
 		ZshWizardViewPlugins,
 		ZshWizardViewTools,
-		ZshWizardViewProjectConfig,
 		ZshWizardViewReview,
 	}
 
@@ -188,19 +187,6 @@ func TestZshWizardModel_ViewTools(t *testing.T) {
 	view := m.View()
 	if view == "" {
 		t.Error("Tools view should not be empty")
-	}
-}
-
-// TestZshWizardModel_ViewProjectConfig tests project config view
-func TestZshWizardModel_ViewProjectConfig(t *testing.T) {
-	m := newTestZshWizardModel()
-	m.width = 80
-	m.height = 24
-	m.currentView = ZshWizardViewProjectConfig
-
-	view := m.View()
-	if view == "" {
-		t.Error("Project config view should not be empty")
 	}
 }
 

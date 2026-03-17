@@ -29,9 +29,10 @@ func main() {
 	installerService := services.NewInstallerService(packageRepo, packageInstaller)
 	configManager := config.NewFileConfigManager("")
 	configService := services.NewConfigService(configManager)
+	repoService, _ := services.NewRepoService("~/.config/" + services.DefaultRepoDirName)
 
 	// Presentation layer
-	model := tui.NewModel(scriptService, installerService, configService)
+	model := tui.NewModel(scriptService, installerService, configService, repoService)
 
 	// Create the TUI program
 	p := tea.NewProgram(

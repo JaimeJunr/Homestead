@@ -39,7 +39,8 @@ func TestIntegration_ScriptsAndTUI(t *testing.T) {
 	}
 
 	// Create TUI model
-	model := tui.NewModel(scriptService, installerService, configService)
+	repoService, _ := services.NewRepoService("")
+	model := tui.NewModel(scriptService, installerService, configService, repoService)
 
 	// Verify model initializes correctly
 	if model.Init() == nil {

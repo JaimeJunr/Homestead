@@ -58,11 +58,8 @@ export PATH="$HOME/.cargo/bin:$PATH"
 # General configuration
 [[ -f ~/.zsh/general/aliases.zsh ]] && source ~/.zsh/general/aliases.zsh
 [[ -f ~/.zsh/general/functions.zsh ]] && source ~/.zsh/general/functions.zsh
-{{ if .IncludeProjectConfig }}
-# Project-specific configuration
-[[ -f ~/.zsh/projects/ivt.zsh ]] && source ~/.zsh/projects/ivt.zsh
-{{ end }}
 {{ if .HasPowerlevel10k }}
 # Powerlevel10k config
+# To customize the prompt, run `p10k configure` or edit ~/.p10k.zsh
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 {{ end }}

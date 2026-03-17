@@ -43,19 +43,22 @@ If you just want to try it without installing:
 make run
 ```
 
-## 3. Run the Zsh wizard
+## 3. Zsh: plugins vs repositório
 
-From the main menu, select **🐚 Configurar Zsh**. The wizard walks you through:
+O menu tem duas entradas para Zsh:
 
-1. **Core components** — choose Zsh, Oh My Zsh, and/or Powerlevel10k
-2. **Plugins** — pick from 15 Zsh plugins (git, docker, autosuggestions, etc.)
-3. **Dev tools** — NVM, Bun, SDKMAN, pnpm, and others
-4. **Project config** — optionally include project-specific aliases/functions
-5. **Review** — preview your future `.zshrc` before applying anything
+- **🔧 Plugins e temas Zsh** (visível depois de instalar Oh My Zsh) — wizard local: escolher plugins, ferramentas (NVM, Bun, etc.) e gerar `.zshrc`. Nada de repositório.
+- **⚙️ Configurar Zsh** — repositório de config (dotfiles): criar um novo repo e enviar para a nuvem (GitHub, etc.) ou restaurar/migrar a partir de um repo existente. Útil para migrar de uma máquina para outra: na máquina 1 guarda no repo, na máquina 2 escolhe “já tenho repositório” e restaura.
 
-Navigate with `↑/↓`, toggle items with `Space`, move between steps with `n` or `→`, go back with `Esc`.
+**Plugins e temas Zsh** (wizard local):
 
-Nothing is written to disk until you confirm at the review step.
+1. **Plugins** — escolher plugins Zsh (git, docker, autosuggestions, etc.)
+2. **Ferramentas** — NVM, Bun, SDKMAN, pnpm, etc.
+3. **Revisão** — pré-visualizar e aplicar
+
+Navegação: `↑/↓`, `Space` para marcar, `n`/`→` próximo passo, `Esc` voltar. Só escreve em disco quando confirmar na revisão.
+
+**Configurar Zsh** (repo): escolher “Sim” (já tenho repo) ou “Não” (criar novo), indicar URL do repositório; o Homestead faz clone/push e backup/restauro dos ficheiros (por defeito `.zshrc` e `~/.zsh/`).
 
 ## 4. Run system scripts
 

@@ -2,15 +2,14 @@ package interfaces
 
 import "github.com/JaimeJunr/Homestead/internal/domain/entities"
 
-// ConfigSelections represents the user's selections during wizard
+// ConfigSelections represents the user's selections during wizard (Plugins e temas Zsh)
 type ConfigSelections struct {
-	CoreComponents       []string          // zsh, oh-my-zsh, powerlevel10k
-	Plugins              []string          // git, docker, rails, etc
-	Tools                []string          // nvm, bun, homebrew, etc
-	IncludeProjectConfig bool              // Include IVT/Performit configs
-	CustomAliases        map[string]string // Additional custom aliases
-	CustomFunctions      map[string]string // Additional custom functions
-	CustomEnvVars        map[string]string // Additional environment variables
+	CoreComponents []string          // zsh, oh-my-zsh, powerlevel10k
+	Plugins        []string          // git, docker, rails, etc
+	Tools          []string          // nvm, bun, homebrew, etc
+	CustomAliases  map[string]string // Additional custom aliases
+	CustomFunctions map[string]string // Additional custom functions
+	CustomEnvVars  map[string]string // Additional environment variables
 }
 
 // ConfigManager defines the interface for managing shell configurations

@@ -64,10 +64,9 @@ func TestTemplateLoader_RenderZshrcFromEmbeddedFS(t *testing.T) {
 		"HasSDKMAN":            false,
 		"HasPNPM":              false,
 		"HasDeno":              false,
-		"HasHomebrew":          false,
-		"HasPyenv":             false,
-		"HasCargo":             false,
-		"IncludeProjectConfig": false,
+		"HasHomebrew": false,
+		"HasPyenv":    false,
+		"HasCargo":    false,
 	}
 
 	result, err := loader.RenderTemplate("zshrc.tmpl", data)

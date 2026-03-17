@@ -47,26 +47,51 @@ func (i *DefaultPackageInstaller) Install(pkg *entities.Package, progressCallbac
 		return nil
 	}
 
-	// Download phase
-	progressCallback(interfaces.InstallProgress{
-		Package:  pkg,
-		Status:   "downloading",
-		Progress: 0,
-		Message:  "Iniciando download...",
-		CanAbort: true,
-	})
-
-	downloadPath, err := i.downloadPackage(pkg, progressCallback)
-	if err != nil {
+	var downloadPath string
+	if pkg.DownloadURL != "" {
+		// Download phase
 		progressCallback(interfaces.InstallProgress{
-			Package:     pkg,
-			Status:      "failed",
-			Progress:    0,
-			Message:     "Erro ao baixar",
-			Error:       err,
-			IsCompleted: true,
+			Package:  pkg,
+			Status:   "downloading",
+			Progress: 0,
+			Message:  "Iniciando download...",
+			CanAbort: true,
 		})
-		return fmt.Errorf("download failed: %w", err)
+
+		var err error
+		downloadPath, err = i.downloadPackage(pkg, progressCallback)
+		if err != nil {
+			progressCallback(interfaces.InstallProgress{
+				Package:     pkg,
+				Status:      "failed",
+				Progress:    0,
+				Message:     "Erro ao baixar",
+				Error:       err,
+				IsCompleted: true,
+			})
+			return fmt.Errorf("download failed: %w", err)
+		}
+	} else {
+		// No download: run install command from temp dir (e.g. apt, curl|bash)
+		downloadPath = filepath.Join(i.tempDir, pkg.ID)
+		if err := os.MkdirAll(downloadPath, 0750); err != nil {
+			progressCallback(interfaces.InstallProgress{
+				Package:     pkg,
+				Status:      "failed",
+				Progress:    0,
+				Message:     "Erro ao preparar instalação",
+				Error:       err,
+				IsCompleted: true,
+			})
+			return fmt.Errorf("prepare install dir: %w", err)
+		}
+		progressCallback(interfaces.InstallProgress{
+			Package:  pkg,
+			Status:   "downloading",
+			Progress: 60,
+			Message:  "Preparando instalação...",
+			CanAbort: false,
+		})
 	}
 
 	// Installation phase
@@ -203,6 +228,7 @@ func (i *DefaultPackageInstaller) installPackage(pkg *entities.Package, download
 	installCmd := strings.ReplaceAll(pkg.InstallCmd, "install.sh", downloadPath)
 	installCmd = strings.ReplaceAll(installCmd, "cursor.AppImage", downloadPath)
 	installCmd = strings.ReplaceAll(installCmd, "antigravity.deb", downloadPath)
+	installCmd = strings.ReplaceAll(installCmd, "{{download_path}}", downloadPath)
 
 	// Execute install command
 	cmd := exec.Command("bash", "-c", installCmd)
