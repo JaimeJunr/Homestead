@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"os/exec"
 
 	"github.com/JaimeJunr/Homestead/internal/domain/entities"
 	"github.com/JaimeJunr/Homestead/internal/domain/interfaces"
@@ -72,6 +73,42 @@ func (s *ScriptService) ExecuteScript(id string) error {
 	}
 
 	return nil
+}
+
+// ExecuteScriptCapture runs the script and returns combined stdout/stderr (for in-app TUI).
+func (s *ScriptService) ExecuteScriptCapture(id string) (output string, err error) {
+	if id == "" {
+		return "", fmt.Errorf("execute script: %w", types.ErrInvalidInput)
+	}
+
+	script, err := s.repo.FindByID(id)
+	if err != nil {
+		return "", fmt.Errorf("execute script %s: %w", id, err)
+	}
+
+	out, err := s.executor.ExecuteCapture(script)
+	if err != nil {
+		return out, fmt.Errorf("execute script %s: %w", id, err)
+	}
+	return out, nil
+}
+
+// ScriptInteractiveCommand builds an exec.Cmd for tea.ExecProcess (sudo / TTY).
+func (s *ScriptService) ScriptInteractiveCommand(id string) (*exec.Cmd, error) {
+	if id == "" {
+		return nil, fmt.Errorf("execute script: %w", types.ErrInvalidInput)
+	}
+
+	script, err := s.repo.FindByID(id)
+	if err != nil {
+		return nil, fmt.Errorf("execute script %s: %w", id, err)
+	}
+
+	cmd, err := s.executor.InteractiveCommand(script)
+	if err != nil {
+		return nil, fmt.Errorf("execute script %s: %w", id, err)
+	}
+	return cmd, nil
 }
 
 // CanExecuteScript checks if a script can be executed

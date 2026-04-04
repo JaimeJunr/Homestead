@@ -4,6 +4,12 @@ import (
 	"github.com/JaimeJunr/Homestead/internal/domain/types"
 )
 
+const (
+	NativeMonitorNone    = ""
+	NativeMonitorBattery = "battery"
+	NativeMonitorMemory  = "memory"
+)
+
 // Script represents a system maintenance script
 type Script struct {
 	ID           string
@@ -12,6 +18,8 @@ type Script struct {
 	Path         string
 	Category     types.Category
 	RequiresSudo bool
+	// NativeMonitor: painel integrado no TUI ("battery" / "memory"); Path pode ficar vazio.
+	NativeMonitor string
 }
 
 // Validate checks if the script entity is valid
@@ -22,10 +30,16 @@ func (s *Script) Validate() error {
 	if s.Name == "" {
 		return types.ErrInvalidInput
 	}
-	if s.Path == "" {
+	if !s.Category.IsValid() {
 		return types.ErrInvalidInput
 	}
-	if !s.Category.IsValid() {
+	if s.NativeMonitor != "" {
+		if s.NativeMonitor != NativeMonitorBattery && s.NativeMonitor != NativeMonitorMemory {
+			return types.ErrInvalidInput
+		}
+		return nil
+	}
+	if s.Path == "" {
 		return types.ErrInvalidInput
 	}
 	return nil

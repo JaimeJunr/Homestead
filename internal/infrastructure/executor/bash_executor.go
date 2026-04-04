@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -30,28 +31,21 @@ func NewBashExecutor() interfaces.ScriptExecutor {
 	}
 }
 
-// Execute executes a bash script
-func (e *BashExecutor) Execute(script *entities.Script) error {
-	if err := e.Validate(script); err != nil {
-		return fmt.Errorf("execute script %s: %w", script.ID, err)
+func (e *BashExecutor) newScriptCmd(script *entities.Script) (*exec.Cmd, error) {
+	if script.NativeMonitor != "" {
+		return nil, fmt.Errorf("native monitor script %s", script.ID)
 	}
-
-	// Construct full path to script
 	scriptPath := filepath.Join(e.rootDir, script.Path)
-
-	// Check if script exists
 	if _, err := os.Stat(scriptPath); os.IsNotExist(err) {
-		return fmt.Errorf("execute script %s: script file not found at %s: %w",
+		return nil, fmt.Errorf("execute script %s: script file not found at %s: %w",
 			script.ID, scriptPath, types.ErrNotFound)
 	}
 
-	// Get current user information
 	currentUser, err := user.Current()
 	if err != nil {
-		return fmt.Errorf("execute script %s: get current user: %w", script.ID, err)
+		return nil, fmt.Errorf("execute script %s: get current user: %w", script.ID, err)
 	}
 
-	// Prepare command
 	var cmd *exec.Cmd
 	if script.RequiresSudo {
 		cmd = exec.Command("sudo", "-E", "bash", scriptPath)
@@ -59,18 +53,32 @@ func (e *BashExecutor) Execute(script *entities.Script) error {
 		cmd = exec.Command("bash", scriptPath)
 	}
 
-	// Set environment variables (preserve user context for sudo)
 	cmd.Env = append(os.Environ(),
 		fmt.Sprintf("REAL_USER=%s", currentUser.Username),
 		fmt.Sprintf("REAL_HOME=%s", currentUser.HomeDir),
 	)
 
-	// Connect to terminal for interactive scripts
+	return cmd, nil
+}
+
+// Execute executes a bash script attached to the current terminal
+func (e *BashExecutor) Execute(script *entities.Script) error {
+	if err := e.Validate(script); err != nil {
+		return fmt.Errorf("execute script %s: %w", script.ID, err)
+	}
+	if script.NativeMonitor != "" {
+		return fmt.Errorf("execute script %s: native monitor (use o TUI): %w", script.ID, types.ErrInvalidInput)
+	}
+
+	cmd, err := e.newScriptCmd(script)
+	if err != nil {
+		return err
+	}
+
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	// Execute
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("execute script %s: %w", script.ID, types.ErrExecutionFailed)
 	}
@@ -78,9 +86,50 @@ func (e *BashExecutor) Execute(script *entities.Script) error {
 	return nil
 }
 
+// ExecuteCapture runs the script and returns combined stdout/stderr (no TTY).
+func (e *BashExecutor) ExecuteCapture(script *entities.Script) (string, error) {
+	if err := e.Validate(script); err != nil {
+		return "", fmt.Errorf("execute script %s: %w", script.ID, err)
+	}
+	if script.NativeMonitor != "" {
+		return "", fmt.Errorf("execute script %s: native monitor: %w", script.ID, types.ErrInvalidInput)
+	}
+
+	cmd, err := e.newScriptCmd(script)
+	if err != nil {
+		return "", err
+	}
+
+	var buf bytes.Buffer
+	cmd.Stdout = &buf
+	cmd.Stderr = &buf
+	cmd.Stdin = nil
+
+	runErr := cmd.Run()
+	out := buf.String()
+	if runErr != nil {
+		return out, fmt.Errorf("execute script %s: %w", script.ID, types.ErrExecutionFailed)
+	}
+	return out, nil
+}
+
+// InteractiveCommand returns a command for tea.ExecProcess (sudo / password prompts).
+func (e *BashExecutor) InteractiveCommand(script *entities.Script) (*exec.Cmd, error) {
+	if err := e.Validate(script); err != nil {
+		return nil, fmt.Errorf("execute script %s: %w", script.ID, err)
+	}
+	if script.NativeMonitor != "" {
+		return nil, fmt.Errorf("execute script %s: native monitor: %w", script.ID, types.ErrInvalidInput)
+	}
+	return e.newScriptCmd(script)
+}
+
 // CanExecute checks if a script can be executed
 func (e *BashExecutor) CanExecute(script *entities.Script) bool {
 	if script == nil {
+		return false
+	}
+	if script.NativeMonitor != "" {
 		return false
 	}
 
@@ -114,6 +163,9 @@ func (e *BashExecutor) Validate(script *entities.Script) error {
 	// Validate entity
 	if err := script.Validate(); err != nil {
 		return fmt.Errorf("validate script: %w", err)
+	}
+	if script.NativeMonitor != "" {
+		return nil
 	}
 
 	// Check if can execute

@@ -4,14 +4,15 @@ package types
 type PackageCategory string
 
 const (
-	PackageCategoryIDE      PackageCategory = "ide"
-	PackageCategoryTool     PackageCategory = "tool"
-	PackageCategoryApp      PackageCategory = "app"
-	PackageCategoryZshCore  PackageCategory = "zsh_core"
-	PackageCategoryTerminal PackageCategory = "terminal"
-	PackageCategoryShell    PackageCategory = "shell"
-	PackageCategoryAI       PackageCategory = "ai"
-	PackageCategoryGames    PackageCategory = "games"
+	PackageCategoryIDE       PackageCategory = "ide"
+	PackageCategoryTool      PackageCategory = "tool"
+	PackageCategoryApp       PackageCategory = "app"
+	PackageCategoryZshCore   PackageCategory = "zsh_core"
+	PackageCategoryTerminal  PackageCategory = "terminal"
+	PackageCategoryShell     PackageCategory = "shell"
+	PackageCategoryAI        PackageCategory = "ai"
+	PackageCategoryGames     PackageCategory = "games"
+	PackageCategorySysAdmin  PackageCategory = "sys_admin"
 )
 
 // IsValid checks if the category is valid
@@ -24,7 +25,8 @@ func (c PackageCategory) IsValid() bool {
 		PackageCategoryTerminal,
 		PackageCategoryShell,
 		PackageCategoryAI,
-		PackageCategoryGames:
+		PackageCategoryGames,
+		PackageCategorySysAdmin:
 		return true
 	default:
 		return false

@@ -28,8 +28,8 @@ func TestGetAllScripts(t *testing.T) {
 		if script.Description == "" {
 			t.Errorf("Script %d: Description is empty", i)
 		}
-		if script.Path == "" {
-			t.Errorf("Script %d: Path is empty", i)
+		if script.Path == "" && script.Native == "" {
+			t.Errorf("Script %d: Path is empty without Native", i)
 		}
 		if script.Category == "" {
 			t.Errorf("Script %d: Category is empty", i)
@@ -84,13 +84,13 @@ func TestScriptFields(t *testing.T) {
 		{
 			id:           "monitor-battery",
 			expectedName: "Monitor de Bateria",
-			expectedPath: "scripts/monitoring/teste_bateria.sh",
+			expectedPath: "",
 			requiresSudo: false,
 		},
 		{
 			id:           "monitor-memory",
 			expectedName: "Uso de Memória",
-			expectedPath: "scripts/monitoring/memoria.sh",
+			expectedPath: "",
 			requiresSudo: false,
 		},
 	}

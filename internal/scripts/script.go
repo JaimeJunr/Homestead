@@ -10,12 +10,13 @@ import (
 
 // Script represents a system maintenance script
 type Script struct {
-	ID          string
-	Name        string
-	Description string
-	Path        string
-	Category    string
+	ID           string
+	Name         string
+	Description  string
+	Path         string
+	Category     string
 	RequiresSudo bool
+	Native string // battery | memory: só no TUI; Path pode ficar vazio
 }
 
 // ScriptCategory represents different categories of scripts
@@ -55,20 +56,22 @@ func GetAllScripts() []Script {
 			RequiresSudo: true,
 		},
 		{
-			ID:          "monitor-battery",
-			Name:        "Monitor de Bateria",
-			Description: "Exibe informações detalhadas da bateria",
-			Path:        "scripts/monitoring/teste_bateria.sh",
-			Category:    string(CategoryMonitoring),
+			ID:           "monitor-battery",
+			Name:         "Monitor de Bateria",
+			Description:  "Carga, carregador e detalhes da bateria",
+			Path:         "",
+			Category:     string(CategoryMonitoring),
 			RequiresSudo: false,
+			Native:       "battery",
 		},
 		{
-			ID:          "monitor-memory",
-			Name:        "Uso de Memória",
-			Description: "Mostra consumo de memória RAM",
-			Path:        "scripts/monitoring/memoria.sh",
-			Category:    string(CategoryMonitoring),
+			ID:           "monitor-memory",
+			Name:         "Uso de Memória",
+			Description:  "Uso de memória RAM e swap",
+			Path:         "",
+			Category:     string(CategoryMonitoring),
 			RequiresSudo: false,
+			Native:       "memory",
 		},
 	}
 }
@@ -89,6 +92,9 @@ func GetScriptsByCategory(category ScriptCategory) []Script {
 
 // Execute runs a script with proper environment setup
 func (s *Script) Execute() error {
+	if s.Native != "" {
+		return fmt.Errorf("este item só funciona no Homestead (menu Monitoramento)")
+	}
 	// Get project root directory
 	rootDir, err := os.Getwd()
 	if err != nil {

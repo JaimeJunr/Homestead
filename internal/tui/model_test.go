@@ -63,17 +63,20 @@ func TestViewStates(t *testing.T) {
 	if ViewConfirmation != 4 {
 		t.Errorf("ViewConfirmation should be 4, got %d", ViewConfirmation)
 	}
-	if ViewExecuting != 5 {
-		t.Errorf("ViewExecuting should be 5, got %d", ViewExecuting)
+	if ViewScriptOutput != 5 {
+		t.Errorf("ViewScriptOutput should be 5, got %d", ViewScriptOutput)
 	}
-	if ViewInstalling != 6 {
-		t.Errorf("ViewInstalling should be 6, got %d", ViewInstalling)
+	if ViewNativeMonitor != 6 {
+		t.Errorf("ViewNativeMonitor should be 6, got %d", ViewNativeMonitor)
 	}
-	if ViewZshWizard != 7 {
-		t.Errorf("ViewZshWizard should be 7, got %d", ViewZshWizard)
+	if ViewInstalling != 7 {
+		t.Errorf("ViewInstalling should be 7, got %d", ViewInstalling)
 	}
-	if ViewZshApplying != 8 {
-		t.Errorf("ViewZshApplying should be 8, got %d", ViewZshApplying)
+	if ViewZshWizard != 8 {
+		t.Errorf("ViewZshWizard should be 8, got %d", ViewZshWizard)
+	}
+	if ViewZshApplying != 9 {
+		t.Errorf("ViewZshApplying should be 9, got %d", ViewZshApplying)
 	}
 }
 
@@ -200,9 +203,9 @@ func TestModelStateTransitions(t *testing.T) {
 			expectedState: ViewScriptList,
 		},
 		{
-			name:          "Can be at executing",
-			initialState:  ViewExecuting,
-			expectedState: ViewExecuting,
+			name:          "Can be at script output",
+			initialState:  ViewScriptOutput,
+			expectedState: ViewScriptOutput,
 		},
 	}
 

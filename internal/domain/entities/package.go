@@ -14,6 +14,8 @@ type Package struct {
 	DownloadURL string
 	InstallCmd  string // Command to install after download
 	CheckCmd    string // Command to check if already installed
+	Notes       string // optional; extra text on install confirmation
+	ProjectURL  string // official site or source repo
 }
 
 // Validate checks if the package is valid
