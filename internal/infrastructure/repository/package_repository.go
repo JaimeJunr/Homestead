@@ -30,7 +30,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "claude-code",
 			Name:        "Claude Code CLI",
-			Description: "CLI oficial da Anthropic para desenvolvimento com Claude",
+			Description: "Agente de código no terminal da Anthropic: navega no repositório, edita arquivos, roda testes e integra-se ao Git e às suas ferramentas de desenvolvimento.",
 			Version:     "latest",
 			Category:    types.PackageCategoryIDE,
 			DownloadURL: "https://storage.googleapis.com/claude-code/install.sh",
@@ -41,7 +41,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "cursor",
 			Name:        "Cursor AI",
-			Description: "Editor de código com IA integrada",
+			Description: "Editor baseado no VS Code com IA embutida para autocompletar, chat sobre o código e refatorações guiadas pelo contexto do projeto.",
 			Version:     "latest",
 			Category:    types.PackageCategoryIDE,
 			DownloadURL: "https://download.cursor.sh/linux/appImage/x64",
@@ -52,7 +52,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "antigravity",
 			Name:        "Antigravity",
-			Description: "IDE moderna com recursos avançados",
+			Description: "IDE contemporânea voltada a produtividade e fluxos de trabalho atuais, com foco em experiência integrada além do editor clássico.",
 			Version:     "latest",
 			Category:    types.PackageCategoryIDE,
 			DownloadURL: "https://antigravity.dev/download/linux",
@@ -63,7 +63,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "vscode",
 			Name:        "VS Code",
-			Description: "Editor de código da Microsoft, leve e extensível",
+			Description: "Editor da Microsoft com ecossistema enorme de extensões, depuração integrada, Git embutido e suporte a praticamente qualquer linguagem.",
 			Version:     "latest",
 			Category:    types.PackageCategoryIDE,
 			DownloadURL: "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64",
@@ -74,7 +74,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "zed",
 			Name:        "Zed",
-			Description: "Editor de código moderno e rápido, focado em colaboração",
+			Description: "Editor em Rust com baixa latência, pensado para pair programming e edição colaborativa em tempo real no mesmo buffer.",
 			Version:     "latest",
 			Category:    types.PackageCategoryIDE,
 			DownloadURL: "https://zed.dev/api/releases/latest/linux/deb",
@@ -85,7 +85,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "neovim",
 			Name:        "Neovim",
-			Description: "Fork moderno do Vim, extensível e otimizado para uso em terminal",
+			Description: "Fork do Vim com API em Lua, LSP, árvores de sintaxe e ecossistema de plugins atual, ideal para quem quer modal editing no terminal.",
 			Version:     "latest",
 			Category:    types.PackageCategoryIDE,
 			InstallCmd:  "sudo apt-get update && sudo apt-get install -y neovim",
@@ -97,7 +97,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "wezterm",
 			Name:        "WezTerm",
-			Description: "Emulador de terminal altamente configurável, com renderização via GPU e multiplexação integrada",
+			Description: "Terminal em Rust com GPU, ligas, abas e multiplexação (como tmux) embutida; configuração declarativa em Lua para quem quer controle total.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTerminal,
 			DownloadURL: "https://wezfurlong.org/wezterm/",
@@ -108,7 +108,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "kitty",
 			Name:        "Kitty",
-			Description: "Emulador de terminal rápido com renderização via GPU, suporte a imagens e multiplexação nativa",
+			Description: "Terminal acelerado por GPU com gráficos ricos, exibição de imagens no buffer, layouts e sessões próprias sem depender de tmux/screen.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTerminal,
 			DownloadURL: "https://sw.kovidgoyal.net/kitty/",
@@ -119,7 +119,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "alacritty",
 			Name:        "Alacritty",
-			Description: "Emulador de terminal minimalista e extremamente rápido, configurado via YAML",
+			Description: "Terminal minimalista em Rust focado em velocidade e simplicidade; configuração em YAML, ideal para quem quer pouca interface e máxima resposta.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTerminal,
 			DownloadURL: "https://alacritty.org",
@@ -130,7 +130,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "warp",
 			Name:        "Warp",
-			Description: "Terminal moderno com IA integrada, interface visual inovadora e blocos de comandos",
+			Description: "Terminal com blocos de comando, busca e IA para sugerir comandos; experiência visual própria (disponibilidade e termos variam por plataforma).",
 			Version:     "latest",
 			Category:    types.PackageCategoryTerminal,
 			DownloadURL: "https://warp.dev",
@@ -141,7 +141,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "wave-terminal",
 			Name:        "Wave Terminal",
-			Description: "Terminal moderno open-source inspirado no Warp, com foco em colaboração",
+			Description: "Terminal open-source com workspaces, SSH e organização de sessões; alternativa comunitária a terminais comerciais focados em blocos e colaboração.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTerminal,
 			DownloadURL: "https://waveterm.dev",
@@ -149,12 +149,23 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 			CheckCmd:    "which wave",
 			ProjectURL:  "https://github.com/waveterm/waveterm",
 		},
+		{
+			ID:          "zash-terminal",
+			Name:        "Zash Terminal",
+			Description: "Terminal moderno e intuitivo para Linux que integra gerenciamento de sessões SSH/SFTP, explorador de arquivos e assistência por IA em uma interface GTK4 de alta produtividade.",
+			Version:     "latest",
+			Category:    types.PackageCategoryTerminal,
+			InstallCmd:  "curl -fsSL https://raw.githubusercontent.com/leoberbert/zashterminal/refs/heads/main/install.sh -o /tmp/zashterminal-install.sh && chmod +x /tmp/zashterminal-install.sh && bash /tmp/zashterminal-install.sh && rm -f /tmp/zashterminal-install.sh",
+			CheckCmd:    "command -v zashterminal >/dev/null 2>&1",
+			ProjectURL:  "https://github.com/leoberbert/zashterminal",
+			Notes: "O script oficial pode pedir sudo e fazer alterações no sistema.\n\nLeia o que o instalador imprimir antes de aceitar.\n\nRepositório: https://github.com/leoberbert/zashterminal",
+		},
 
 		// Shell Core (Zsh, Oh My Zsh, Powerlevel10k) - install via "Instalar componentes core"
 		{
 			ID:          "zsh",
 			Name:        "Zsh",
-			Description: "Z Shell - shell poderoso e configurável",
+			Description: "Z Shell: shell interativo com globbing e completar avançados, histórico compartilhado e base ideal para Oh My Zsh e temas como Powerlevel10k.",
 			Version:     "latest",
 			Category:    types.PackageCategoryZshCore,
 			InstallCmd:  "sudo apt-get install -y zsh",
@@ -164,7 +175,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "oh-my-zsh",
 			Name:        "Oh My Zsh",
-			Description: "Framework para gerenciar configuração Zsh",
+			Description: "Framework que organiza plugins, temas e atalhos do Zsh; ponto de partida padrão para personalizar o shell sem reinventar tudo do zero.",
 			Version:     "latest",
 			Category:    types.PackageCategoryZshCore,
 			DownloadURL: "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh",
@@ -175,7 +186,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "powerlevel10k",
 			Name:        "Powerlevel10k",
-			Description: "Tema Zsh rápido e customizável",
+			Description: "Tema de prompt para Zsh extremamente rápido, com wizard interativo e indicadores de Git, tempo de comando e contexto visual rico.",
 			Version:     "latest",
 			Category:    types.PackageCategoryZshCore,
 			InstallCmd:  "git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/powerlevel10k",
@@ -187,7 +198,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "fish-shell",
 			Name:        "Fish Shell",
-			Description: "Shell amigável e moderno, com autosuggestions e syntax highlighting nativos",
+			Description: "Shell focado em ergonomia: autosugestão e syntax highlighting nativos, ajuda integrada e configuração mais simples que Bash/Zsh para o dia a dia.",
 			Version:     "latest",
 			Category:    types.PackageCategoryShell,
 			InstallCmd:  "sudo apt-get install -y fish",
@@ -197,7 +208,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "fisher",
 			Name:        "Fisher",
-			Description: "Gerenciador de plugins para Fish Shell",
+			Description: "Gerenciador de pacotes para Fish: instala e atualiza plugins e temas a partir de repositórios Git com comandos simples.",
 			Version:     "latest",
 			Category:    types.PackageCategoryShell,
 			InstallCmd:  "fish -c 'curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher'",
@@ -209,7 +220,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "zsh-plugin-git",
 			Name:        "Git Plugin",
-			Description: "Plugin built-in do Oh My Zsh para Git",
+			Description: "Plugin nativo do Oh My Zsh com aliases e funções úteis para status, branches, stash e fluxo Git no dia a dia.",
 			Version:     "built-in",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "# Built-in plugin",
@@ -219,7 +230,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "zsh-plugin-docker",
 			Name:        "Docker Plugin",
-			Description: "Plugin built-in do Oh My Zsh para Docker",
+			Description: "Plugin nativo do Oh My Zsh que encurta comandos Docker e Compose com aliases e completar mais ágil.",
 			Version:     "built-in",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "# Built-in plugin",
@@ -229,7 +240,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "zsh-plugin-rails",
 			Name:        "Rails Plugin",
-			Description: "Plugin built-in do Oh My Zsh para Ruby on Rails",
+			Description: "Plugin nativo do Oh My Zsh com atalhos para rails, rake, bundler e tarefas comuns de projetos Ruby on Rails.",
 			Version:     "built-in",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "# Built-in plugin",
@@ -239,7 +250,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "zsh-plugin-z",
 			Name:        "Z Plugin",
-			Description: "Plugin built-in para navegação rápida de diretórios",
+			Description: "Aprende os diretórios que você mais usa e permite pular para eles com poucas letras (navegação por frequência).",
 			Version:     "built-in",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "# Built-in plugin",
@@ -249,7 +260,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "zsh-plugin-sudo",
 			Name:        "Sudo Plugin",
-			Description: "Plugin built-in para adicionar sudo facilmente",
+			Description: "Atalho para prefixar o comando atual com sudo (útil quando você já digitou tudo e esqueceu os privilégios).",
 			Version:     "built-in",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "# Built-in plugin",
@@ -261,7 +272,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "zsh-autosuggestions",
 			Name:        "Zsh Autosuggestions",
-			Description: "Sugestões automáticas baseadas no histórico",
+			Description: "Mostra em cinza comandos parecidos com o histórico; Tab ou seta direita aceita a sugestão, estilo fish.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions",
@@ -271,7 +282,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "zsh-syntax-highlighting",
 			Name:        "Zsh Syntax Highlighting",
-			Description: "Destaque de sintaxe para comandos Zsh",
+			Description: "Colore comandos válidos/inválidos em tempo real antes de executar, reduzindo erros de digitação e typos.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting",
@@ -281,7 +292,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "fzf-zsh",
 			Name:        "FZF Zsh Integration",
-			Description: "Integração do FZF com Zsh",
+			Description: "Instala o fzf (busca fuzzy) e integra ao Zsh para histórico, arquivos e completar interativos com preview.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "git clone https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install --all",
@@ -291,7 +302,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "you-should-use",
 			Name:        "You Should Use",
-			Description: "Lembra aliases existentes ao digitar comandos",
+			Description: "Avisa quando você roda um comando longo que já tem alias definido, ajudando a criar hábito de usar atalhos.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "git clone https://github.com/MichaelAquilina/zsh-you-should-use.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/you-should-use",
@@ -301,7 +312,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "zsh-completions",
 			Name:        "Zsh Completions",
-			Description: "Completions adicionais para Zsh",
+			Description: "Coleção extra de arquivos de completar para ferramentas CLI que ainda não vêm no Zsh padrão.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "git clone https://github.com/zsh-users/zsh-completions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-completions",
@@ -311,7 +322,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "zsh-history-substring-search",
 			Name:        "Zsh History Substring Search",
-			Description: "Busca no histórico por substring",
+			Description: "Navegue no histórico com setas buscando qualquer trecho do comando, como no Bash com readline configurado.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "git clone https://github.com/zsh-users/zsh-history-substring-search ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-history-substring-search",
@@ -321,7 +332,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "fast-syntax-highlighting",
 			Name:        "Fast Syntax Highlighting",
-			Description: "Syntax highlighting mais rápido",
+			Description: "Alternativa de destaque de sintaxe para Zsh focada em desempenho, com mais estilos e integração com outros plugins.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting",
@@ -331,7 +342,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "zsh-autocomplete",
 			Name:        "Zsh Autocomplete",
-			Description: "Autocomplete em tempo real para Zsh",
+			Description: "Menu de sugestões que atualiza enquanto você digita, aproximando o Zsh da experiência de IDEs e do fish.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "git clone --depth 1 -- https://github.com/marlonrichert/zsh-autocomplete.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autocomplete",
@@ -341,7 +352,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "auto-notify",
 			Name:        "Auto Notify",
-			Description: "Notificações automáticas para comandos longos",
+			Description: "Envia notificação do desktop quando um comando demora além de um limiar, para você não ficar olhando o terminal.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "git clone https://github.com/MichaelAquilina/zsh-auto-notify.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/auto-notify",
@@ -351,7 +362,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "zsh-vi-mode",
 			Name:        "Zsh Vi Mode",
-			Description: "Melhor modo Vi para Zsh",
+			Description: "Modo Vi no Zsh com atalhos estilo Vim na linha de comando, indicadores de modo e extensões de edição.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "git clone https://github.com/jeffreytse/zsh-vi-mode ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-vi-mode",
@@ -363,7 +374,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "shell-gpt",
 			Name:        "ShellGPT",
-			Description: "Assistente de IA universal para qualquer shell (explicações e sugestões inteligentes)",
+			Description: "CLI que consulta modelos de linguagem para explicar comandos, gerar scripts e responder no contexto do shell (requer chave de API).",
 			Version:     "latest",
 			Category:    types.PackageCategoryAI,
 			DownloadURL: "https://github.com/TheR1D/shell_gpt",
@@ -374,7 +385,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "fish-ai",
 			Name:        "Fish-AI",
-			Description: "Integração de IA específica para Fish Shell, com sugestões inline",
+			Description: "Plugin Fish que conecta o shell a provedores de IA para sugestões e ajuda contextual na linha de comando.",
 			Version:     "latest",
 			Category:    types.PackageCategoryAI,
 			DownloadURL: "https://github.com/Realiserad/fish-ai",
@@ -387,7 +398,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "nvm",
 			Name:        "NVM (Node Version Manager)",
-			Description: "Gerenciador de versões Node.js",
+			Description: "Instala e troca versões do Node.js e npm por projeto ou globalmente, sem conflitar com pacotes do sistema.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash",
@@ -397,7 +408,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "bun",
 			Name:        "Bun",
-			Description: "Runtime JavaScript/TypeScript rápido",
+			Description: "Runtime JS/TS e toolkit com instalador de pacotes e bundler integrados, focado em velocidade e compatibilidade com ecossistema Node.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "curl -fsSL https://bun.sh/install | bash",
@@ -407,7 +418,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "sdkman",
 			Name:        "SDKMAN!",
-			Description: "Gerenciador de SDKs para JVM",
+			Description: "Gerencia JDKs, Gradle, Maven, Kotlin e dezenas de SDKs Java em paralelo, por usuário e sem bagunçar o apt.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "curl -s https://get.sdkman.io | bash",
@@ -417,7 +428,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "pnpm",
 			Name:        "pnpm",
-			Description: "Gerenciador de pacotes Node.js eficiente",
+			Description: "Gerenciador de pacotes Node com store de conteúdo endereçável, economizando disco e acelerando installs em monorepos.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "curl -fsSL https://get.pnpm.io/install.sh | sh -",
@@ -427,7 +438,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "deno",
 			Name:        "Deno",
-			Description: "Runtime seguro para JavaScript e TypeScript",
+			Description: "Runtime TypeScript/JavaScript com permissões explícitas, imports por URL e ferramentas embutidas (formatter, linter, test runner).",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "curl -fsSL https://deno.land/install.sh | sh",
@@ -437,7 +448,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "angular-cli",
 			Name:        "Angular CLI",
-			Description: "Interface de linha de comando para Angular",
+			Description: "Ferramenta oficial para criar, construir, testar e fazer deploy de aplicações Angular (`ng`).",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "npm install -g @angular/cli",
@@ -447,7 +458,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "openvpn3",
 			Name:        "OpenVPN 3",
-			Description: "Cliente VPN moderno",
+			Description: "Cliente VPN da família OpenVPN 3 com modelo de sessão e integração mais alinhada a ambientes desktop Linux atuais.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "sudo apt-get install -y openvpn3",
@@ -457,7 +468,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "gh",
 			Name:        "GitHub CLI",
-			Description: "CLI oficial do GitHub; necessário para criar repositórios automaticamente no fluxo Configurar Zsh",
+			Description: "Autenticação, issues, PRs, Actions e repositórios pelo terminal; usado também pelo fluxo Configurar Zsh para criar repos automaticamente.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg && echo \"deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main\" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null && sudo apt update && sudo apt install gh -y",
@@ -467,7 +478,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "homebrew",
 			Name:        "Homebrew",
-			Description: "Gerenciador de pacotes para Linux",
+			Description: "Gerenciador de pacotes portável (Linux/macOS) com fórmulas e casks; útil para ferramentas de dev fora do apt.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"",
@@ -477,7 +488,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "openjdk",
 			Name:        "Java OpenJDK",
-			Description: "Implementação open-source da plataforma Java (JDK)",
+			Description: "JDK OpenJDK via apt para compilar e rodar aplicações Java/JVM no sistema (versão empacotada pela sua distro).",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "sudo apt-get update && sudo apt-get install -y openjdk-21-jdk",
@@ -487,7 +498,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "starship",
 			Name:        "Starship",
-			Description: "Prompt minimalista, rápido e personalizável para qualquer shell",
+			Description: "Prompt multi-shell (Bash, Zsh, Fish…) em Rust: um único arquivo de config mostra Git, Node, Rust, duração de comando e mais.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "curl -sS https://starship.rs/install.sh | sh -s -- -y",
@@ -497,7 +508,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "flathub",
 			Name:        "Flathub (Flatpak Remote)",
-			Description: "Repositório principal de aplicações Flatpak",
+			Description: "Adiciona o remote Flathub ao Flatpak, de onde vêm milhares de apps empacotados (Insomnia, jogos, clientes, etc.).",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo",
@@ -507,7 +518,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "google-chrome",
 			Name:        "Google Chrome",
-			Description: "Navegador web Google Chrome (versão estável)",
+			Description: "Navegador da Google, canal estável: sync com conta Google, DevTools e suporte amplo a padrões web e extensões.",
 			Version:     "latest",
 			Category:    types.PackageCategoryApp,
 			DownloadURL: "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb",
@@ -518,7 +529,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "insomnia",
 			Name:        "Insomnia",
-			Description: "Cliente HTTP e GraphQL para testar APIs",
+			Description: "Cliente visual para REST, GraphQL e gRPC: organize ambientes, variáveis e coleções para depurar APIs sem curl manual.",
 			Version:     "latest",
 			Category:    types.PackageCategoryApp,
 			InstallCmd:  "flatpak install -y flathub rest.insomnia.Insomnia",
@@ -528,7 +539,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "remmina",
 			Name:        "Remmina",
-			Description: "Cliente de desktop remoto com suporte a RDP, VNC, SPICE, X2Go, SSH e mais",
+			Description: "Cliente GTK para acesso remoto: RDP, VNC, SSH, SPICE e outros protocolos em uma única interface com perfis salvos.",
 			Version:     "latest",
 			Category:    types.PackageCategoryApp,
 			InstallCmd:  "sudo apt-get update && sudo apt-get install -y remmina",
@@ -538,7 +549,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "distrobox",
 			Name:        "Distrobox",
-			Description: "Contêineres integrados ao sistema para múltiplas distribuições Linux",
+			Description: "Roda outras distros em Podman/Docker com home, USB e apps gráficos integrados ao host — ideal para pacotes que só existem noutra distro.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "curl -s https://raw.githubusercontent.com/89luca89/distrobox/main/install | sudo sh",
@@ -548,7 +559,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "mise",
 			Name:        "Mise",
-			Description: "Gerenciador de versões para múltiplas linguagens e ferramentas",
+			Description: "Unifica gerenciadores como nvm, rbenv e pyenv numa só ferramenta: versões por diretório e plugins para dezenas de runtimes.",
 			Version:     "latest",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "curl https://mise.run | sh",
@@ -558,7 +569,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "dotnet-sdk",
 			Name:        ".NET SDK",
-			Description: "SDK do .NET para desenvolvimento de aplicações",
+			Description: "SDK Microsoft .NET para build, test e publish de apps C#, F# e VB; script oficial instala em ~/.dotnet com variáveis no shell.",
 			Version:     "8.0",
 			Category:    types.PackageCategoryTool,
 			InstallCmd:  "wget https://dot.net/v1/dotnet-install.sh -O /tmp/dotnet-install.sh && chmod +x /tmp/dotnet-install.sh && /tmp/dotnet-install.sh --version latest && echo 'export DOTNET_ROOT=$HOME/.dotnet' >> ~/.bashrc && echo 'export PATH=$PATH:$HOME/.dotnet:$HOME/.dotnet/tools' >> ~/.bashrc",
@@ -570,7 +581,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "cockpit",
 			Name:        "Cockpit (servidor)",
-			Description: "Painel web para administrar esta máquina (serviços, logs, armazenamento, rede)",
+			Description: "Interface web para administrar o host Linux: serviços systemd, logs, armazenamento, rede, terminais e atualizações em um só lugar.",
 			Version:     "latest",
 			Category:    types.PackageCategorySysAdmin,
 			InstallCmd:  "sudo apt-get update && sudo apt-get install -y cockpit && sudo systemctl enable --now cockpit.socket",
@@ -581,7 +592,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "cockpit-client",
 			Name:        "Cockpit Client",
-			Description: "App para conectar a servidores Cockpit remotos (Flatpak)",
+			Description: "Aplicativo Flatpak que aponta para máquinas com Cockpit já instalado, para gerenciá-las sem abrir o navegador manualmente.",
 			Version:     "latest",
 			Category:    types.PackageCategorySysAdmin,
 			InstallCmd:  "flatpak install -y flathub org.cockpit_project.CockpitClient",
@@ -592,7 +603,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "webmin",
 			Name:        "Webmin",
-			Description: "Painel web clássico de administração Unix/Linux",
+			Description: "Painel web tradicional para usuários, serviços, firewall, arquivos e módulos Perl — comum em servidores e homelabs.",
 			Version:     "latest",
 			Category:    types.PackageCategorySysAdmin,
 			InstallCmd:  "curl -fsSL -o /tmp/webmin-setup-repo.sh https://raw.githubusercontent.com/webmin/webmin/master/webmin-setup-repo.sh && sudo sh /tmp/webmin-setup-repo.sh -f && rm -f /tmp/webmin-setup-repo.sh && sudo apt-get update && sudo apt-get install -y webmin",
@@ -603,7 +614,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "topgrade",
 			Name:        "Topgrade",
-			Description: "Atualiza pacotes do sistema, flatpak, rustup, npm global e dezenas de outras fontes num único comando",
+			Description: "Um comando dispara atualizações encadeadas: apt, flatpak, snap, firmware, rustup, pip, npm global e dezenas de outros backends configuráveis.",
 			Version:     "latest",
 			Category:    types.PackageCategorySysAdmin,
 			InstallCmd:  "sudo apt-get update && sudo apt-get install -y pipx && pipx install topgrade",
@@ -614,7 +625,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "termius",
 			Name:        "Termius",
-			Description: "Cliente SSH/SFTP com sincronização (Flatpak)",
+			Description: "Cliente SSH/SFTP com cofre de hosts, port forwarding e sync opcional entre dispositivos (conta na nuvem conforme configuração).",
 			Version:     "latest",
 			Category:    types.PackageCategorySysAdmin,
 			InstallCmd:  "flatpak install -y flathub com.termius.Termius",
@@ -625,7 +636,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "cpu-x",
 			Name:        "CPU-X",
-			Description: "Informações detalhadas de CPU, GPU, placa-mãe e sensores (Flatpak)",
+			Description: "Equivalente gráfico ao CPU-Z: CPU, cache, RAM, GPU, placa-mãe, sensores e benchmark leve para diagnóstico de hardware.",
 			Version:     "latest",
 			Category:    types.PackageCategorySysAdmin,
 			InstallCmd:  "flatpak install -y flathub io.github.thetumultuousunicornofdarkness.cpu-x",
@@ -636,7 +647,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "sssd-active-directory",
 			Name:        "Ferramentas Active Directory (realm/sssd)",
-			Description: "Pacotes para integrar Ubuntu/Debian a um domínio AD (SSSD, realmd, Kerberos)",
+			Description: "Pacotes base (SSSD, realmd, Kerberos, PAM) para associar a máquina a um domínio Windows AD; exige join e DNS configurados depois.",
 			Version:     "latest",
 			Category:    types.PackageCategorySysAdmin,
 			InstallCmd:  "sudo apt-get update && sudo apt-get install -y sssd realmd adcli samba-common-bin adsys krb5-user libpam-krb5 libpam-ccreds auth-client-config oddjob oddjob-mkhomedir",
@@ -647,7 +658,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "sloth-bash",
 			Name:        "Sloth-Bash",
-			Description: "Ferramentas shell do projeto Sloth-Bash (script remoto oficial)",
+			Description: "Conjunto de utilitários e convenções em Bash do projeto Sloth-Bash, instalados pelo script oficial do repositório.",
 			Version:     "latest",
 			Category:    types.PackageCategorySysAdmin,
 			InstallCmd:  "curl -fsSL https://raw.githubusercontent.com/psygreg/sloth-bash/main/install.sh | bash",
@@ -655,23 +666,12 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 			ProjectURL:  "https://github.com/psygreg/sloth-bash",
 			Notes: "Executa o install.sh oficial do repositório (curl | bash). Só confirme se você confia na origem.\n\nRepositório: https://github.com/psygreg/sloth-bash",
 		},
-		{
-			ID:          "zash-terminal",
-			Name:        "Zash Terminal",
-			Description: "Terminal com recursos extras (instalador upstream)",
-			Version:     "latest",
-			Category:    types.PackageCategorySysAdmin,
-			InstallCmd:  "curl -fsSL https://raw.githubusercontent.com/leoberbert/zashterminal/refs/heads/main/install.sh -o /tmp/zashterminal-install.sh && chmod +x /tmp/zashterminal-install.sh && bash /tmp/zashterminal-install.sh && rm -f /tmp/zashterminal-install.sh",
-			CheckCmd:    "command -v zashterminal >/dev/null 2>&1",
-			ProjectURL:  "https://github.com/leoberbert/zashterminal",
-			Notes: "O script oficial pode pedir sudo e fazer alterações no sistema.\n\nLeia o que o instalador imprimir antes de aceitar.\n\nRepositório: https://github.com/leoberbert/zashterminal",
-		},
 
 		// Games
 		{
 			ID:          "prism-launcher",
 			Name:        "Prism Launcher",
-			Description: "Launcher open-source para Minecraft com múltiplas instâncias",
+			Description: "Launcher open-source para Minecraft: várias instâncias, mods, packs e contas com interface clara e sem launcher oficial obrigatório.",
 			Version:     "latest",
 			Category:    types.PackageCategoryGames,
 			InstallCmd:  "flatpak install -y flathub org.prismlauncher.PrismLauncher",
@@ -681,7 +681,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "lutris",
 			Name:        "Lutris",
-			Description: "Plataforma de jogos para Linux, integrando Wine, emuladores e lojas",
+			Description: "Hub para jogos no Linux: scripts de instalação, Wine/Proton, emuladores e integração com Epic, GOG, Humble e biblioteca local.",
 			Version:     "latest",
 			Category:    types.PackageCategoryGames,
 			InstallCmd:  "flatpak install -y flathub net.lutris.Lutris",
@@ -691,7 +691,7 @@ func (r *InMemoryPackageRepository) initializeDefaultPackages() {
 		{
 			ID:          "gear-lever",
 			Name:        "Gear Lever",
-			Description: "Gerenciador gráfico para integrar e atualizar AppImages no sistema",
+			Description: "App GTK que instala AppImages com ícone no menu, atualizações e integração ao sistema, sem linha de comando.",
 			Version:     "latest",
 			Category:    types.PackageCategoryApp,
 			InstallCmd:  "flatpak install -y flathub it.mijorus.gearlever",

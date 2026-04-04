@@ -851,7 +851,7 @@ func (m *Model) loadInstallerCategories() {
 		},
 		installerCategoryItem{
 			title: "🖥️ Emuladores de Terminal",
-			desc:  "WezTerm, Kitty, Alacritty, Wave Terminal e outros",
+			desc:  "WezTerm, Kitty, Alacritty, Zash Terminal, Warp, Wave e outros",
 			categories: []types.PackageCategory{
 				types.PackageCategoryTerminal,
 			},
