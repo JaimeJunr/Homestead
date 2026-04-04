@@ -11,7 +11,7 @@ Necessidade de definir estrutura base do projeto.
 
 Adotar **arquitetura em camadas** (Layered Architecture) com princípios de **Clean Architecture**:
 
-1. **Presentation Layer** (TUI) — `internal/tui/`
+1. **Presentation Layer** (TUI) — `internal/tui/` (pacote raiz + subpacotes `cmds`, `items`, `msg`, `theme`, `sysurl`; ver [TUI_LAYOUT.md](../TUI_LAYOUT.md))
 2. **Application Layer** (use cases) — `internal/app/`
 3. **Domain Layer** (entidades + interfaces) — `internal/domain/`
 4. **Infrastructure Layer** (implementações) — `internal/infrastructure/`

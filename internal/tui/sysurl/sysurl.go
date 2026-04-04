@@ -1,4 +1,5 @@
-package tui
+// Package sysurl opens links and copies text using OS tools (xdg-open, wl-copy, etc.).
+package sysurl
 
 import (
 	"fmt"
@@ -9,8 +10,8 @@ import (
 	"github.com/JaimeJunr/Homestead/internal/domain/entities"
 )
 
-// OpenURL opens url with the OS default handler (xdg-open / gio on Linux).
-func OpenURL(url string) error {
+// Open opens url with the OS default handler (xdg-open / gio on Linux).
+func Open(url string) error {
 	url = strings.TrimSpace(url)
 	if url == "" {
 		return fmt.Errorf("URL vazia")
@@ -33,8 +34,8 @@ func OpenURL(url string) error {
 	return cmd.Start()
 }
 
-// CopyURLToClipboard copies text to the clipboard (Wayland / X11).
-func CopyURLToClipboard(text string) error {
+// CopyToClipboard copies text to the clipboard (Wayland / X11).
+func CopyToClipboard(text string) error {
 	text = strings.TrimSpace(text)
 	if text == "" {
 		return fmt.Errorf("nada para copiar")

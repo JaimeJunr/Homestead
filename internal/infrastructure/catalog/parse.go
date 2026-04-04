@@ -27,12 +27,15 @@ type packageJSON struct {
 	ProjectURL  string `json:"project_url"`
 }
 
+// normalizeCategory maps JSON category strings to a known menu bucket.
+// Unknown values and explicit "other" collapse to tool so remote catalog entries
+// appear under "Ferramentas de desenvolvimento" (no separate "Outros" submenu).
 func normalizeCategory(s string) types.PackageCategory {
 	c := types.PackageCategory(strings.ToLower(strings.TrimSpace(s)))
-	if c.IsValid() {
+	if c.IsValid() && c != types.PackageCategoryOther {
 		return c
 	}
-	return types.PackageCategoryOther
+	return types.PackageCategoryTool
 }
 
 // ParseManifest decodes JSON and returns packages when schema_version is supported.

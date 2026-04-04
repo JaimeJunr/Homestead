@@ -29,22 +29,27 @@ Homestead segue uma **arquitetura em camadas** (Layered Architecture) com princ�
 ### SOLID Principles
 
 ✅ **S - Single Responsibility Principle**
+
 - Cada package/struct tem uma responsabilidade única
 - Exemplo: `ScriptRunner` só executa, `ScriptRegistry` só registra
 
 ✅ **O - Open/Closed Principle**
+
 - Aberto para extensão, fechado para modificação
 - Novos installers via interface, sem modificar código existente
 
 ✅ **L - Liskov Substitution Principle**
+
 - Implementações de interfaces são substituíveis
 - Qualquer `Installer` pode ser usado onde a interface é esperada
 
 ✅ **I - Interface Segregation Principle**
+
 - Interfaces pequenas e focadas
 - `Installer`, `Executor`, `Registry` separadas
 
 ✅ **D - Dependency Inversion Principle**
+
 - Dependa de abstrações, não de implementações
 - TUI depende de interface `ScriptExecutor`, não da implementação
 
@@ -94,14 +99,17 @@ Homestead segue uma **arquitetura em camadas** (Layered Architecture) com princ�
 
 **Responsabilidade**: Interface com o usuário
 
-**Localização**: `internal/tui/`
+**Localização**: `internal/tui/` (pacote raiz `tui`) e subpacotes auxiliares.
 
-**Componentes**:
-- `model.go` - Bubbletea Model (State + Update + View)
-- `views/` - Views específicas (menu, script list, installer wizard)
-- `components/` - Componentes reutilizáveis (progress bar, input forms)
+**Componentes** (ver [TUI_LAYOUT.md](TUI_LAYOUT.md)):
 
-**Dependências**: Domain Layer (interfaces), Application Layer
+- **Raiz** — `model.go` (`Model`, `Update`, `Init`, `handleEnter`), `view_render.go`, `lists.go`, `menu.go`, `native_monitor.go`, wizards Zsh (`zsh_*_model.go`).
+- `**internal/tui/cmds`** — `tea.Cmd` (catálogo, instalação, scripts, URLs).
+- `**internal/tui/items**` — linhas `list.Item` (menu, scripts, pacotes).
+- `**internal/tui/msg**` — tipos de mensagem Bubble Tea.
+- `**internal/tui/theme**` — Lipgloss partilhado; `**internal/tui/sysurl**` — abrir/copiar URL sem ciclo com o raiz.
+
+**Dependências**: Application Layer (services), tipos do Domain; o raiz também usa `internal/infrastructure/catalog` e `internal/monitoring` onde necessário.
 
 ### 2. Application Layer
 
@@ -110,6 +118,7 @@ Homestead segue uma **arquitetura em camadas** (Layered Architecture) com princ�
 **Localização**: `internal/app/` (a criar)
 
 **Componentes**:
+
 - `usecases/` - Use cases específicos
   - `execute_script.go`
   - `install_package.go`
@@ -119,6 +128,7 @@ Homestead segue uma **arquitetura em camadas** (Layered Architecture) com princ�
   - `installer_service.go`
 
 **Exemplo**:
+
 ```go
 type ExecuteScriptUseCase struct {
     executor domain.ScriptExecutor
@@ -139,6 +149,7 @@ func (uc *ExecuteScriptUseCase) Execute(scriptID string) error {
 **Localização**: `internal/domain/` (a criar)
 
 **Componentes**:
+
 - `entities/` - Entidades do domínio
   - `script.go`
   - `installer.go`
@@ -150,6 +161,7 @@ func (uc *ExecuteScriptUseCase) Execute(scriptID string) error {
   - `installer.go`
 
 **Exemplo**:
+
 ```go
 // Domain Entity
 type Script struct {
@@ -181,6 +193,7 @@ type ScriptRepository interface {
 **Localização**: `internal/infrastructure/` (a criar)
 
 **Componentes**:
+
 - `executor/` - Executores concretos
   - `bash_executor.go`
   - `docker_executor.go`
@@ -198,6 +211,7 @@ type ScriptRepository interface {
 **Uso**: Acesso a dados (scripts, instaladores, configurações)
 
 **Implementação**:
+
 ```go
 // Domain interface
 type ScriptRepository interface {
@@ -217,6 +231,7 @@ func (r *InMemoryScriptRepository) FindAll() ([]domain.Script, error) {
 ```
 
 **Vantagens**:
+
 - Separa lógica de acesso a dados
 - Facilita testes (mock repositories)
 - Permite trocar implementação (in-memory → file → database)
@@ -226,6 +241,7 @@ func (r *InMemoryScriptRepository) FindAll() ([]domain.Script, error) {
 **Uso**: Criar instaladores baseado no tipo
 
 **Implementação**:
+
 ```go
 type InstallerFactory interface {
     Create(packageType string) (Installer, error)
@@ -248,6 +264,7 @@ func (f *DefaultInstallerFactory) Create(pkgType string) (Installer, error) {
 ```
 
 **Vantagens**:
+
 - Centraliza criação de objetos
 - Fácil adicionar novos tipos
 - Esconde complexidade de criação
@@ -257,6 +274,7 @@ func (f *DefaultInstallerFactory) Create(pkgType string) (Installer, error) {
 **Uso**: Diferentes estratégias de instalação
 
 **Implementação**:
+
 ```go
 // Domain interface
 type InstallStrategy interface {
@@ -281,6 +299,7 @@ func (i *Installer) Install(pkg Package) error {
 ```
 
 **Vantagens**:
+
 - Algoritmos intercambiáveis
 - Adicionar novas estratégias sem modificar código existente
 - Testável individualmente
@@ -290,6 +309,7 @@ func (i *Installer) Install(pkg Package) error {
 **Uso**: Encapsular operações (útil para undo/redo, logging)
 
 **Implementação**:
+
 ```go
 type Command interface {
     Execute() error
@@ -325,6 +345,7 @@ func (e *CommandExecutor) Execute(cmd Command) error {
 ```
 
 **Vantagens**:
+
 - Histórico de operações
 - Suporte a undo
 - Logging e auditoria
@@ -334,6 +355,7 @@ func (e *CommandExecutor) Execute(cmd Command) error {
 **Uso**: Notificar progresso de operações longas
 
 **Implementação**:
+
 ```go
 type ProgressObserver interface {
     OnProgress(current, total int, message string)
@@ -361,6 +383,7 @@ func (t *TUIProgressObserver) OnProgress(current, total int, msg string) {
 ```
 
 **Vantagens**:
+
 - Desacoplamento
 - Múltiplos observers (TUI, logger, metrics)
 - Fácil adicionar novos observers
@@ -370,6 +393,7 @@ func (t *TUIProgressObserver) OnProgress(current, total int, msg string) {
 **Uso**: Construir objetos complexos (configurações, wizard)
 
 **Implementação**:
+
 ```go
 type InstallerConfigBuilder struct {
     config InstallerConfig
@@ -407,6 +431,7 @@ config := NewInstallerConfigBuilder().
 **Uso**: Adaptar interfaces externas (apt, snap, docker CLI)
 
 **Implementação**:
+
 ```go
 // Interface que queremos
 type PackageManager interface {
@@ -481,15 +506,15 @@ Homestead/
 │   │   └── fs/
 │   │       └── file_system.go
 │   │
-│   ├── tui/                        # Presentation Layer
+│   ├── tui/                        # Presentation Layer (Bubble Tea)
 │   │   ├── model.go
-│   │   ├── views/
-│   │   │   ├── main_menu.go
-│   │   │   ├── script_list.go
-│   │   │   └── installer_wizard.go
-│   │   └── components/
-│   │       ├── progress.go
-│   │       └── form.go
+│   │   ├── view_render.go
+│   │   ├── lists.go
+│   │   ├── cmds/                   # tea.Cmd factories
+│   │   ├── items/                  # list.Item implementations
+│   │   ├── msg/                    # Bubble Tea message types
+│   │   ├── theme/                  # Lipgloss styles
+│   │   └── sysurl/                 # Open URL / clipboard helpers
 │   │
 │   ├── config/                     # Configuration
 │   │   ├── config.go
@@ -517,18 +542,22 @@ Homestead/
 ### Naming Conventions
 
 **Packages**:
+
 - Lowercase, singular
 - Exemplo: `domain`, `executor`, `repository`
 
 **Interfaces**:
+
 - Substantivo ou adjetivo + "er"
 - Exemplo: `Executor`, `Repository`, `Installer`
 
 **Structs**:
+
 - PascalCase
 - Exemplo: `Script`, `AptInstaller`, `ScriptService`
 
 **Methods**:
+
 - PascalCase (públicos), camelCase (privados)
 - Verbos no início
 - Exemplo: `Execute()`, `Install()`, `loadConfig()`
@@ -579,21 +608,11 @@ func NewScriptService(
     }
 }
 
-// main.go - wiring
+// main.go - wiring (detalhes em cmd/homestead/main.go)
 func main() {
-    // Infrastructure
-    repo := repository.NewInMemoryScriptRepository()
-    executor := executor.NewBashExecutor()
-    logger := log.New()
-
-    // Application
-    scriptService := app.NewScriptService(repo, executor, logger)
-
-    // Presentation
-    model := tui.InitialModel(scriptService)
-
-    // Run
-    tea.NewProgram(model).Run()
+    // … infra + services.NewScriptService, NewInstallerService, NewConfigService, NewRepoService …
+    model := tui.NewModel(scriptService, installerService, configService, repoService, catalogURL)
+    tea.NewProgram(model, tea.WithAltScreen()).Run()
 }
 ```
 

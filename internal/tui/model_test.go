@@ -10,6 +10,8 @@ import (
 	"github.com/JaimeJunr/Homestead/internal/infrastructure/executor"
 	"github.com/JaimeJunr/Homestead/internal/infrastructure/installer"
 	"github.com/JaimeJunr/Homestead/internal/infrastructure/repository"
+	"github.com/JaimeJunr/Homestead/internal/tui/items"
+	btmsg "github.com/JaimeJunr/Homestead/internal/tui/msg"
 )
 
 // testModel creates a model for testing with mocked dependencies
@@ -143,9 +145,9 @@ func TestEscapeFromScriptList(t *testing.T) {
 }
 
 func TestMenuItemInterface(t *testing.T) {
-	item := menuItem{
-		title: "Test Title",
-		desc:  "Test Description",
+	item := items.MenuItem{
+		Label: "Test Title",
+		Desc:  "Test Description",
 	}
 
 	if item.Title() != "Test Title" {
@@ -300,7 +302,7 @@ func TestZshApplyResultSuccess(t *testing.T) {
 	model.state = ViewZshApplying
 	model.zshApplyPhase = "applying"
 
-	updated, cmd := model.Update(zshApplyResultMsg{Err: nil})
+	updated, cmd := model.Update(btmsg.ZshApplyResult{Err: nil})
 	m := updated.(Model)
 
 	if m.zshApplyPhase != "success" {
@@ -321,7 +323,7 @@ func TestZshApplyResultError(t *testing.T) {
 	model.zshApplyPhase = "applying"
 	err := fmt.Errorf("test apply error")
 
-	updated, _ := model.Update(zshApplyResultMsg{Err: err})
+	updated, _ := model.Update(btmsg.ZshApplyResult{Err: err})
 	m := updated.(Model)
 
 	if m.zshApplyPhase != "error" {
@@ -338,7 +340,7 @@ func TestZshApplyReturnToMenuMsg(t *testing.T) {
 	model.state = ViewZshApplying
 	model.zshApplyPhase = "success"
 
-	updated, _ := model.Update(zshApplyReturnToMenuMsg{})
+	updated, _ := model.Update(btmsg.ZshApplyReturnToMenu{})
 	m := updated.(Model)
 
 	if m.state != ViewMainMenu {

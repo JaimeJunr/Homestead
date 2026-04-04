@@ -67,7 +67,9 @@ Implementação completa do sistema de instaladores de IDEs seguindo a arquitetu
 **Atualizado:** `internal/tui/`
 
 #### TUI
-- **model.go** - TUI completamente refatorado
+- **Pacote raiz** (`internal/tui/`) — `model.go`, `view_render.go`, `lists.go`, `menu.go`, monitores nativos, wizards; `NewModel(..., installerService, ...)`.
+- **Subpacotes** — `tui/cmds` (fetch catálogo, instalação, progresso), `tui/items` (linhas de lista), `tui/msg` (mensagens Bubble Tea), `tui/theme`, `tui/sysurl`. Ver [TUI_LAYOUT.md](../architecture/TUI_LAYOUT.md).
+- **model.go** — estado principal e `Update` / `handleEnter`
   - Recebe `InstallerService` via DI
   - Novos estados de view:
     - `ViewPackageList` - Lista de pacotes

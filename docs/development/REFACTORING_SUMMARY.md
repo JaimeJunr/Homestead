@@ -2,6 +2,12 @@
 
 Refatoração completa do código para seguir a arquitetura em camadas definida.
 
+## 📁 Organização da TUI (2026-04)
+
+A pasta `internal/tui/` foi estruturada em **subpacotes** (`cmds`, `items`, `msg`, `theme`, `sysurl`) para separar mensagens assíncronas, itens de lista, estilos e helpers de URL sem ciclos de import. O **API pública** permanece `tui.NewModel` no pacote raiz.
+
+Documentação: [TUI_LAYOUT.md](../architecture/TUI_LAYOUT.md).
+
 ## ✅ O Que Foi Feito
 
 ### 1. Domain Layer (Core)
@@ -9,24 +15,25 @@ Refatoração completa do código para seguir a arquitetura em camadas definida.
 **Criado:** `internal/domain/`
 
 #### Entities
+
 - **entities/script.go** - Entidade Script com validação e métodos helper
   - `Script` struct
   - `Validate()` method  
   - `IsCleanup()`, `IsMonitoring()`, `IsInstall()`
 
 #### Interfaces
+
 - **interfaces/repository.go** - Interface ScriptRepository
   - `FindAll()`, `FindByID()`, `FindByCategory()`
   - `Save()`, `Delete()`, `Exists()`
-  
 - **interfaces/executor.go** - Interface ScriptExecutor
   - `Execute()`, `CanExecute()`, `Validate()`
 
 #### Types
+
 - **types/category.go** - Enum de categorias
   - `Category` type com constantes
   - `IsValid()` method
-
 - **types/errors.go** - Erros do domínio
   - `ErrNotFound`, `ErrInvalidInput`, etc.
 
@@ -35,12 +42,14 @@ Refatoração completa do código para seguir a arquitetura em camadas definida.
 **Criado:** `internal/infrastructure/`
 
 #### Repository
+
 - **repository/script_repository.go** - Implementação InMemory
   - Thread-safe com sync.RWMutex
   - Inicializa com scripts default
   - Implementa interface `ScriptRepository`
 
-#### Executor  
+#### Executor
+
 - **executor/bash_executor.go** - Implementação Bash
   - Executa scripts com sudo se necessário
   - Preserva contexto do usuário (REAL_USER, REAL_HOME)
@@ -51,6 +60,7 @@ Refatoração completa do código para seguir a arquitetura em camadas definida.
 **Criado:** `internal/app/services/`
 
 #### Services
+
 - **services/script_service.go** - Service de Scripts
   - Orquestra Repository + Executor
   - `GetAllScripts()`, `GetScriptsByCategory()`
@@ -62,6 +72,7 @@ Refatoração completa do código para seguir a arquitetura em camadas definida.
 **Refatorado:** `internal/tui/`
 
 #### TUI
+
 - **model.go** - TUI refatorado
   - Recebe `ScriptService` via DI
   - Usa entities do domain
@@ -86,6 +97,7 @@ model := tui.NewModel(service)
 ### 6. Testes
 
 **Atualizados:**
+
 - `internal/tui/model_test.go` - Helper `testModel()`
 - `integration_test.go` - Usa nova arquitetura
 
@@ -111,6 +123,7 @@ internal/
 ```
 
 ❌ **Problemas:**
+
 - Acoplamento forte
 - Difícil testar
 - Sem separação de responsabilidades
@@ -130,10 +143,13 @@ internal/
 │   ├── repository/      # InMemory
 │   └── executor/        # Bash
 └── tui/                 # ← PRESENTATION
-    └── model.go         # Usa services
+    ├── model.go         # Model + Update
+    ├── view_render.go, lists.go, menu.go, native_monitor.go, zsh_* …
+    ├── cmds/, items/, msg/, theme/, sysurl/
 ```
 
 ✅ **Benefícios:**
+
 - Separação clara de responsabilidades
 - Testável (mock interfaces)
 - Extensível (fácil adicionar novos repos/executors)
@@ -141,23 +157,27 @@ internal/
 
 ## 🎯 Padrões Aplicados
 
-| Padrão | Onde | Como |
-|--------|------|------|
-| **Repository** | infrastructure/repository | ScriptRepository interface + InMemory impl |
-| **Dependency Injection** | main.go | Manual wiring de dependências |
-| **Service Layer** | app/services | ScriptService orquestra repo + executor |
-| **Interface Segregation** | domain/interfaces | Interfaces pequenas e focadas |
+
+| Padrão                    | Onde                      | Como                                       |
+| ------------------------- | ------------------------- | ------------------------------------------ |
+| **Repository**            | infrastructure/repository | ScriptRepository interface + InMemory impl |
+| **Dependency Injection**  | main.go                   | Manual wiring de dependências              |
+| **Service Layer**         | app/services              | ScriptService orquestra repo + executor    |
+| **Interface Segregation** | domain/interfaces         | Interfaces pequenas e focadas              |
+
 
 ## 📈 Métricas
 
-| Métrica | Antes | Depois |
-|---------|-------|--------|
-| Arquivos Go | 3 | 10 |
-| Camadas | 2 | 4 |
-| Interfaces | 0 | 2 |
-| Testabilidade | Baixa | Alta |
-| Acoplamento | Alto | Baixo |
-| Coesão | Baixa | Alta |
+
+| Métrica       | Antes | Depois |
+| ------------- | ----- | ------ |
+| Arquivos Go   | 3     | 10     |
+| Camadas       | 2     | 4      |
+| Interfaces    | 0     | 2      |
+| Testabilidade | Baixa | Alta   |
+| Acoplamento   | Alto  | Baixo  |
+| Coesão        | Baixa | Alta   |
+
 
 ## 🧪 Testes
 
@@ -195,24 +215,29 @@ ScriptService (Application)
 ### SOLID Aplicado
 
 ✅ **S - Single Responsibility**
+
 - Cada classe/package tem uma responsabilidade
 - Repository só gerencia dados
 - Executor só executa scripts
 - Service orquestra
 
 ✅ **O - Open/Closed**
+
 - Aberto para extensão (novas implementações)
 - Fechado para modificação (interfaces não mudam)
 
 ✅ **L - Liskov Substitution**
+
 - Qualquer implementação de ScriptRepository funciona
 - Qualquer implementação de ScriptExecutor funciona
 
 ✅ **I - Interface Segregation**
+
 - Interfaces pequenas e focadas
 - ScriptRepository != ScriptExecutor
 
 ✅ **D - Dependency Inversion**
+
 - TUI depende de interfaces, não de implementações
 - Service depende de interfaces
 - Implementações na Infrastructure
@@ -220,11 +245,13 @@ ScriptService (Application)
 ### Clean Architecture
 
 ✅ **Camadas com dependências corretas**
+
 ```
 Presentation → Application → Domain ← Infrastructure
 ```
 
 ✅ **Domain independente**
+
 - Não importa nada de fora
 - Core isolado
 - Testável sem dependências
@@ -232,17 +259,10 @@ Presentation → Application → Domain ← Infrastructure
 ### Testabilidade
 
 ```go
-// Antes - difícil testar
+// Testes usam serviços reais in-memory ou mocks por interface (ver internal/tui/model_test.go).
 func TestTUI() {
-    model := tui.InitialModel()
-    // Não posso mockar nada
-}
-
-// Depois - fácil testar  
-func TestTUI() {
-    mockService := &MockScriptService{}
-    model := tui.NewModel(mockService)
-    // Posso controlar comportamento
+    model := testModel() // helper: ScriptService + InstallerService + ConfigService + repo nil
+    _ = model.View()
 }
 ```
 
@@ -251,40 +271,43 @@ func TestTUI() {
 ### 1. Adicionar Testes Unitários
 
 Criar testes para cada camada:
-- [ ] domain/entities testes
-- [ ] infrastructure/repository testes
-- [ ] infrastructure/executor testes
-- [ ] app/services testes
+
+- domain/entities testes
+- infrastructure/repository testes
+- infrastructure/executor testes
+- app/services testes
 
 ### 2. Implementar Installers
 
 Seguir mesma arquitetura:
-- [ ] domain/entities/package.go
-- [ ] domain/interfaces/installer.go
-- [ ] infrastructure/installer/apt_installer.go
-- [ ] app/services/installer_service.go
+
+- domain/entities/package.go
+- domain/interfaces/installer.go
+- infrastructure/installer/apt_installer.go
+- app/services/installer_service.go
 
 ### 3. Adicionar Observer Pattern
 
 Para progresso:
-- [ ] domain/interfaces/observer.go
-- [ ] infrastructure/observer/tui_observer.go
-- [ ] app/services com observer support
+
+- domain/interfaces/observer.go
+- infrastructure/observer/tui_observer.go
+- app/services com observer support
 
 ## ✅ Checklist de Refatoração
 
-- [x] Domain layer criado
-- [x] Entities definidas
-- [x] Interfaces definidas
-- [x] Repository implementado
-- [x] Executor implementado
-- [x] Application layer criado
-- [x] Services criados
-- [x] TUI refatorado
-- [x] Main com DI
-- [x] Testes atualizados
-- [x] Build funciona
-- [x] Testes passam
+- Domain layer criado
+- Entities definidas
+- Interfaces definidas
+- Repository implementado
+- Executor implementado
+- Application layer criado
+- Services criados
+- TUI refatorado
+- Main com DI
+- Testes atualizados
+- Build funciona
+- Testes passam
 
 ## 🎉 Conclusão
 

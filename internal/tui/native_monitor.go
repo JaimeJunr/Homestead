@@ -9,45 +9,38 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/JaimeJunr/Homestead/internal/domain/entities"
 	"github.com/JaimeJunr/Homestead/internal/monitoring"
+	btmsg "github.com/JaimeJunr/Homestead/internal/tui/msg"
+	"github.com/JaimeJunr/Homestead/internal/tui/theme"
 )
 
 const nativeMonitorRefreshInterval = 3 * time.Second
 
-type nativeMonitorReloadMsg struct {
-	kind    string
-	battery *monitoring.BatterySnapshot
-	memory  *monitoring.MemorySnapshot
-	err     error
-}
-
-type nativeMonitorTickMsg struct{}
-
 func nativeMonitorScheduleTick() tea.Cmd {
 	return tea.Tick(nativeMonitorRefreshInterval, func(time.Time) tea.Msg {
-		return nativeMonitorTickMsg{}
+		return btmsg.NativeMonitorTick{}
 	})
 }
 
 func (m Model) nativeMonitorLoadCmd() tea.Cmd {
 	kind := m.nativeMonitorKind
 	return func() tea.Msg {
-		msg := nativeMonitorReloadMsg{kind: kind}
+		out := btmsg.NativeMonitorReload{Kind: kind}
 		switch kind {
 		case entities.NativeMonitorBattery:
-			msg.battery, msg.err = monitoring.ReadBattery()
+			out.Battery, out.Err = monitoring.ReadBattery()
 		case entities.NativeMonitorMemory:
-			msg.memory, msg.err = monitoring.ReadMemory()
+			out.Memory, out.Err = monitoring.ReadMemory()
 		default:
-			msg.err = fmt.Errorf("monitor desconhecido: %q", kind)
+			out.Err = fmt.Errorf("monitor desconhecido: %q", kind)
 		}
-		return msg
+		return out
 	}
 }
 
 func (m Model) renderNativeMonitorView() string {
 	boxW := scriptOutputCardWidth(m.width)
-	head := titleStyle.Render("Homestead") + "\n" +
-		helpStyle.Render("Gerenciador de Sistema") + "\n" +
+	head := theme.Title.Render("Homestead") + "\n" +
+		theme.Help.Render("Gerenciador de Sistema") + "\n" +
 		scriptOutputDivider(boxW) + "\n"
 
 	var body string
@@ -60,23 +53,23 @@ func (m Model) renderNativeMonitorView() string {
 		body = lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render("Monitor inválido.")
 	}
 
-	footer := scriptScreenFooterBarStyle.Width(max(12, boxW-8)).Render(
+	footer := theme.ScriptScreenFooterBar.Width(max(12, boxW-8)).Render(
 		"r: atualizar agora · Enter / Esc / q: voltar · atualiza a cada 3s",
 	)
 	content := head + body + "\n" + footer
-	box := scriptScreenOuterStyle.Width(boxW)
+	box := theme.ScriptScreenOuter.Width(boxW)
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, box.Render(content))
 }
 
 func renderNativeBatteryPanel(m Model) string {
-	title := scriptScreenAccentStyle.Render("🔋 Monitor de bateria")
+	title := theme.ScriptScreenAccent.Render("🔋 Monitor de bateria")
 
 	if m.nativeBatteryErr != nil {
 		return title + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render(m.nativeBatteryErr.Error())
 	}
 	b := m.nativeBattery
 	if b == nil {
-		return title + "\n\n" + helpStyle.Render("Carregando…")
+		return title + "\n\n" + theme.Help.Render("Carregando…")
 	}
 
 	var sb strings.Builder
@@ -114,13 +107,13 @@ func renderNativeBatteryPanel(m Model) string {
 			acLine = lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render("desconectado")
 		}
 		if b.ACName != "" {
-			acLine += helpStyle.Render("  (" + b.ACName + ")")
+			acLine += theme.Help.Render("  (" + b.ACName + ")")
 		}
 		kv("Carregador", acLine)
 	}
 
 	sb.WriteString("\n")
-	sb.WriteString(scriptScreenAccentStyle.Render("Detalhes") + "\n")
+	sb.WriteString(theme.ScriptScreenAccent.Render("Detalhes") + "\n")
 
 	if b.EnergyNowUWh > 0 {
 		kv("Energia agora", fmt.Sprintf("%.2f Wh", float64(b.EnergyNowUWh)/1e6))
@@ -160,10 +153,10 @@ func renderNativeBatteryPanel(m Model) string {
 	}
 
 	sb.WriteString("\n")
-	sb.WriteString(scriptScreenAccentStyle.Render("Resumo") + "\n")
+	sb.WriteString(theme.ScriptScreenAccent.Render("Resumo") + "\n")
 	sb.WriteString(batteryStatusLine(b))
 	if est := batteryChargeETA(b); est != "" {
-		sb.WriteString(helpStyle.Render(est) + "\n")
+		sb.WriteString(theme.Help.Render(est) + "\n")
 	}
 
 	return sb.String()
@@ -184,7 +177,7 @@ func batteryStatusLine(b *monitoring.BatterySnapshot) string {
 	case b.Status == "Discharging" && acOn:
 		return lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render("⚠ AC conectado, mas status é descarga — verifique cabo/adaptador.")
 	default:
-		return helpStyle.Render("Status: " + b.Status)
+		return theme.Help.Render("Status: " + b.Status)
 	}
 }
 
@@ -209,14 +202,14 @@ func batteryChargeETA(b *monitoring.BatterySnapshot) string {
 }
 
 func renderNativeMemoryPanel(m Model) string {
-	title := scriptScreenAccentStyle.Render("🧠 Uso de memória")
+	title := theme.ScriptScreenAccent.Render("🧠 Uso de memória")
 
 	if m.nativeMemoryErr != nil {
 		return title + "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render(m.nativeMemoryErr.Error())
 	}
 	s := m.nativeMemory
 	if s == nil {
-		return title + "\n\n" + helpStyle.Render("Carregando…")
+		return title + "\n\n" + theme.Help.Render("Carregando…")
 	}
 
 	mb := func(kb uint64) string {
@@ -233,7 +226,7 @@ func renderNativeMemoryPanel(m Model) string {
 		sb.WriteString("\n")
 	}
 
-	sb.WriteString(scriptScreenAccentStyle.Render("RAM") + "\n")
+	sb.WriteString(theme.ScriptScreenAccent.Render("RAM") + "\n")
 	kv("Total", mb(s.MemTotalKB))
 	kv("Usado*", mb(s.UsedApproxKB()))
 	kv("Livre", mb(s.MemFreeKB))
@@ -243,7 +236,7 @@ func renderNativeMemoryPanel(m Model) string {
 	kv("Compart.", mb(s.ShmemKB))
 
 	sb.WriteString("\n")
-	sb.WriteString(scriptScreenAccentStyle.Render("Swap") + "\n")
+	sb.WriteString(theme.ScriptScreenAccent.Render("Swap") + "\n")
 	kv("Total", mb(s.SwapTotalKB))
 	kv("Livre", mb(s.SwapFreeKB))
 	if s.SwapTotalKB > s.SwapFreeKB {
@@ -251,7 +244,7 @@ func renderNativeMemoryPanel(m Model) string {
 	}
 
 	sb.WriteString("\n")
-	sb.WriteString(helpStyle.Render("* “Usado” é uma estimativa."))
+	sb.WriteString(theme.Help.Render("* “Usado” é uma estimativa."))
 
 	return sb.String()
 }

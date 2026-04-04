@@ -22,7 +22,7 @@ O projeto Homestead possui uma suite completa de testes incluindo:
 
 ### Estatísticas Atuais
 
-- **Packages testados**: 3 (scripts, tui, testutil)
+- **Packages testados**: inclui `scripts`, `tui` (raiz + subpacotes sem `_test`), `testutil`, `services`, `entities`, etc. (`go test ./...`)
 - **Testes unitários**: ~30 testes
 - **Testes de integração**: 3 testes
 - **Benchmarks**: 5 benchmarks
@@ -39,7 +39,12 @@ Homestead/
 │   │   └── script_test.go          # Testes do gerenciador de scripts
 │   ├── tui/
 │   │   ├── model.go
-│   │   └── model_test.go           # Testes da interface TUI
+│   │   ├── model_test.go           # Testes do pacote raiz tui
+│   │   ├── cmds/                   # (sem testes dedicados)
+│   │   ├── items/
+│   │   ├── msg/
+│   │   ├── theme/
+│   │   └── sysurl/
 │   └── testutil/
 │       └── testutil.go              # Helpers e utilitários de teste
 └── coverage.out                     # Relatório de cobertura (gerado)
@@ -83,7 +88,7 @@ go test -v ./...
 
 # Package específico
 go test ./internal/scripts
-go test ./internal/tui
+go test ./internal/tui/...
 
 # Com cobertura
 go test -cover ./...
@@ -126,11 +131,8 @@ Testam interação entre componentes.
 
 **Exemplo - integration_test.go:**
 ```go
-func TestIntegration_ScriptsAndTUI(t *testing.T) {
-    allScripts := scripts.GetAllScripts()
-    model := tui.InitialModel()
-
-    // Verifica integração entre scripts e TUI
+func TestIntegration_FullWiring(t *testing.T) {
+    // Ver integration_test.go — espelha cmd/homestead/main.go e usa tui.NewModel(...)
 }
 ```
 

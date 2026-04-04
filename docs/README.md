@@ -10,6 +10,7 @@ docs/
 ├── TESTING.md                             # Testing guide and conventions
 ├── architecture/
 │   ├── ARCHITECTURE.md                    # Layer overview and conventions
+│   ├── TUI_LAYOUT.md                      # internal/tui packages and file map
 │   ├── PATTERNS_GUIDE.md                  # Design patterns with code examples
 │   ├── adrs/                              # Architecture Decision Records (per-file)
 │   └── DIAGRAMS.md                        # Data flow and module diagrams
@@ -25,6 +26,7 @@ docs/
 
 **Want to understand the architecture?**
 → [architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md) — the 4-layer overview
+→ [architecture/TUI_LAYOUT.md](architecture/TUI_LAYOUT.md) — `internal/tui` subpackages and files
 → [architecture/DIAGRAMS.md](architecture/DIAGRAMS.md) — visual data flows
 
 **Adding a feature?**
@@ -43,7 +45,7 @@ Homestead follows Clean Architecture with 4 layers:
 
 ```
 ┌─────────────────────────────────────┐
-│  Presentation  (internal/tui)       │  Bubbletea models, views
+│  Presentation  (internal/tui)       │  Bubble Tea Model; subpkgs cmds, items, msg, theme, sysurl
 ├─────────────────────────────────────┤
 │  Application   (internal/app)       │  ConfigService, PluginService, WizardService
 ├─────────────────────────────────────┤
@@ -59,15 +61,17 @@ Dependencies only flow inward. Nothing in `domain` imports from other layers. `t
 
 ## Project metrics
 
-| | |
-|---|---|
-| Test packages | 9 |
-| Tests | 97+ |
-| Architecture layers | 4 |
-| Packages in installer catalog | 29 |
-| Zsh plugins available | 15 |
-| ADRs documented | 12 |
+
+|                               |     |
+| ----------------------------- | --- |
+| Test packages                 | 9   |
+| Tests                         | 97+ |
+| Architecture layers           | 4   |
+| Packages in installer catalog | 29  |
+| Zsh plugins available         | 15  |
+| ADRs documented               | 13  |
+
 
 ---
 
-**Last updated:** 2026-03-15
+**Last updated:** 2026-04-04

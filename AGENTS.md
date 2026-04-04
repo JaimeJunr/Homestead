@@ -20,7 +20,7 @@ Homestead is a Go CLI with a Bubble Tea TUI for Linux maintenance: run bundled b
 | Path                       | Role                                                                                                      |
 | -------------------------- | --------------------------------------------------------------------------------------------------------- |
 | `cmd/homestead/main.go`    | DI wiring: repos, executor, installer, config, `tui.NewModel`, `tea.NewProgram`                           |
-| `internal/tui/`            | Bubble Tea models, menus, script output, Zsh wizard                                                       |
+| `internal/tui/`            | Bubble Tea: pacote raiz (`Model`, wizards, views) + `tui/cmds`, `tui/items`, `tui/msg`, `tui/theme`, `tui/sysurl` — ver `docs/architecture/TUI_LAYOUT.md` |
 | `internal/app/services/`   | Application services (`ScriptService`, installers, config, repo, wizard)                                  |
 | `internal/domain/`         | Entities (`Script`, packages, shell config), `types` (e.g. `Category`), interfaces                        |
 | `internal/infrastructure/` | `repository/` (in-memory catalogs), `executor/` (bash), `installer/`, `config/`, `templates/`, `plugins/` |

@@ -9,6 +9,8 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/JaimeJunr/Homestead/internal/app/services"
+	btmsg "github.com/JaimeJunr/Homestead/internal/tui/msg"
+	"github.com/JaimeJunr/Homestead/internal/tui/sysurl"
 )
 
 // zshRepoResultMsg is sent when a repo operation (push/clone/restore) finishes
@@ -544,8 +546,8 @@ func (m ZshRepoModel) browserOriginURL() string {
 
 func zshRepoOpenURLCmd(webURL string) tea.Cmd {
 	return func() tea.Msg {
-		err := OpenURL(webURL)
-		return urlActionDoneMsg{verb: "open", err: err}
+		err := sysurl.Open(webURL)
+		return btmsg.URLActionDone{Verb: "open", Err: err}
 	}
 }
 

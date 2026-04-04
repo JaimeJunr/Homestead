@@ -49,7 +49,7 @@ func TestParseManifest_SchemaZero(t *testing.T) {
 	}
 }
 
-func TestParseManifest_UnknownCategoryBecomesOther(t *testing.T) {
+func TestParseManifest_UnknownCategoryBecomesTool(t *testing.T) {
 	raw := []byte(`{
 		"schema_version": 1,
 		"packages": [
@@ -71,8 +71,32 @@ func TestParseManifest_UnknownCategoryBecomesOther(t *testing.T) {
 	if len(pkgs) != 1 {
 		t.Fatalf("len = %d", len(pkgs))
 	}
-	if pkgs[0].Category != types.PackageCategoryOther {
+	if pkgs[0].Category != types.PackageCategoryTool {
 		t.Fatalf("category = %q", pkgs[0].Category)
+	}
+}
+
+func TestParseManifest_ExplicitOtherCategoryBecomesTool(t *testing.T) {
+	raw := []byte(`{
+		"schema_version": 1,
+		"packages": [
+			{
+				"id": "misc",
+				"name": "Misc",
+				"description": "d",
+				"version": "1",
+				"category": "other",
+				"install_cmd": "true",
+				"check_cmd": "true"
+			}
+		]
+	}`)
+	pkgs, _, err := ParseManifest(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(pkgs) != 1 || pkgs[0].Category != types.PackageCategoryTool {
+		t.Fatalf("pkgs = %#v", pkgs)
 	}
 }
 
