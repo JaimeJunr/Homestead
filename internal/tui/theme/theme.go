@@ -1,4 +1,4 @@
-// Package theme centralizes Lipgloss styles and small text helpers for the TUI.
+// Package theme holds shared Lipgloss styles for the TUI.
 package theme
 
 import (
@@ -10,7 +10,6 @@ import (
 
 var ansiEscapeRe = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
 
-// StripANSI removes ANSI escape sequences from s.
 func StripANSI(s string) string {
 	return ansiEscapeRe.ReplaceAllString(s, "")
 }
@@ -66,12 +65,10 @@ var (
 				Padding(0, 1)
 )
 
-// InstallerBreadcrumb prefixes installer sub-screens.
 func InstallerBreadcrumb(segment string) string {
 	return "📦 Instaladores > " + segment
 }
 
-// InstallerPackageSectionTitle maps a package category to a section title.
 func InstallerPackageSectionTitle(c types.PackageCategory) string {
 	switch c {
 	case types.PackageCategoryIDE:

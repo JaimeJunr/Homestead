@@ -1,4 +1,4 @@
-// Package cmds builds tea.Cmd values for async work (catalog, install, scripts, URLs).
+// Package cmds provides tea.Cmd constructors for async TUI work.
 package cmds
 
 import (
@@ -14,7 +14,6 @@ import (
 	"github.com/JaimeJunr/Homestead/internal/tui/sysurl"
 )
 
-// CheckZshCoreInstalled detects oh-my-zsh for the main menu.
 func CheckZshCoreInstalled(installerService *services.InstallerService) tea.Cmd {
 	return func() tea.Msg {
 		installed, _ := installerService.IsPackageInstalled("oh-my-zsh")
@@ -22,7 +21,6 @@ func CheckZshCoreInstalled(installerService *services.InstallerService) tea.Cmd 
 	}
 }
 
-// FetchCatalog downloads and merges the remote installer catalog when url is non-empty.
 func FetchCatalog(url string, svc *services.InstallerService) tea.Cmd {
 	if strings.TrimSpace(url) == "" {
 		return nil
@@ -46,7 +44,6 @@ func FetchCatalog(url string, svc *services.InstallerService) tea.Cmd {
 	}
 }
 
-// RunScriptCapture runs ExecuteScriptCapture in a Cmd.
 func RunScriptCapture(service *services.ScriptService, scriptID string) tea.Cmd {
 	return func() tea.Msg {
 		out, err := service.ExecuteScriptCapture(scriptID)
@@ -54,7 +51,6 @@ func RunScriptCapture(service *services.ScriptService, scriptID string) tea.Cmd 
 	}
 }
 
-// InstallPackage streams install progress as Progress messages.
 func InstallPackage(service *services.InstallerService, packageID string) tea.Cmd {
 	return func() tea.Msg {
 		progressChan := make(chan interfaces.InstallProgress, 10)
@@ -82,7 +78,6 @@ func InstallPackage(service *services.InstallerService, packageID string) tea.Cm
 	}
 }
 
-// ApplyZshConfig runs ConfigService.ApplyConfig and sends ZshApplyResult.
 func ApplyZshConfig(configService *services.ConfigService, selections interfaces.ConfigSelections) tea.Cmd {
 	return func() tea.Msg {
 		err := configService.ApplyConfig(selections)
@@ -90,7 +85,6 @@ func ApplyZshConfig(configService *services.ConfigService, selections interfaces
 	}
 }
 
-// OpenURL opens url and reports with URLActionDone (Verb "open").
 func OpenURL(url string) tea.Cmd {
 	return func() tea.Msg {
 		err := sysurl.Open(url)
@@ -98,7 +92,6 @@ func OpenURL(url string) tea.Cmd {
 	}
 }
 
-// CopyURL copies url to clipboard and reports with URLActionDone (Verb "copy").
 func CopyURL(url string) tea.Cmd {
 	return func() tea.Msg {
 		err := sysurl.CopyToClipboard(url)

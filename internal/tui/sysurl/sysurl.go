@@ -10,7 +10,6 @@ import (
 	"github.com/JaimeJunr/Homestead/internal/domain/entities"
 )
 
-// Open opens url with the OS default handler (xdg-open / gio on Linux).
 func Open(url string) error {
 	url = strings.TrimSpace(url)
 	if url == "" {
@@ -34,7 +33,6 @@ func Open(url string) error {
 	return cmd.Start()
 }
 
-// CopyToClipboard copies text to the clipboard (Wayland / X11).
 func CopyToClipboard(text string) error {
 	text = strings.TrimSpace(text)
 	if text == "" {
@@ -58,7 +56,6 @@ func CopyToClipboard(text string) error {
 	return fmt.Errorf("instale wl-copy (Wayland) ou xclip/xsel (X11) para copiar no terminal")
 }
 
-// PackageKeyboardURL is ProjectURL, or DownloadURL if ProjectURL is empty.
 func PackageKeyboardURL(pkg entities.Package) string {
 	if u := strings.TrimSpace(pkg.ProjectURL); u != "" {
 		return u

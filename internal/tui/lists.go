@@ -8,12 +8,10 @@ import (
 	"github.com/JaimeJunr/Homestead/internal/tui/theme"
 )
 
-// loadScripts loads scripts for the selected category (Esc volta ao menu principal).
 func (m *Model) loadScripts(category types.Category) {
 	m.loadScriptsWithParent(category, ViewMainMenu)
 }
 
-// loadScriptsWithParent define para onde Esc regressa a partir desta lista (ex.: instaladores).
 func (m *Model) loadScriptsWithParent(category types.Category, parent ViewState) {
 	m.scriptListParent = parent
 	m.scriptListAsInstaller = parent == ViewInstallerCategories && category == types.CategoryUtilities
@@ -45,7 +43,6 @@ func (m *Model) loadScriptsWithParent(category types.Category, parent ViewState)
 	m.scriptList.SetShowStatusBar(false)
 }
 
-// loadPackages loads packages for the selected category
 func (m *Model) loadPackages(category types.PackageCategory) {
 	packages, err := m.installerService.GetPackagesByCategory(category)
 	if err != nil {
@@ -56,7 +53,6 @@ func (m *Model) loadPackages(category types.PackageCategory) {
 	m.setPackageList(packages, category, &t)
 }
 
-// loadPackagesFromCategories loads packages from multiple categories (e.g. IDE + Zsh core for Instaladores)
 func (m *Model) loadPackagesFromCategories(categories []types.PackageCategory) {
 	packages, err := m.installerService.GetPackagesByCategories(categories)
 	if err != nil {
@@ -88,7 +84,6 @@ func (m *Model) setPackageList(packages []entities.Package, category types.Packa
 	m.packageList.SetShowStatusBar(false)
 }
 
-// loadInstallerCategories inicializa a lista de categorias dentro de "Instaladores"
 func (m *Model) loadInstallerCategories() {
 	rowItems := []list.Item{
 		items.InstallerCategoryItem{
@@ -112,7 +107,7 @@ func (m *Model) loadInstallerCategories() {
 		},
 		items.InstallerCategoryItem{
 			Heading: "🔧 Ferramentas de desenvolvimento",
-			Desc:    "GitHub CLI (gh), NVM, Bun, pnpm, Deno, entradas do catálogo remoto com categoria genérica",
+			Desc:    "GitHub CLI (gh), NVM, Bun, pnpm, Deno e afins",
 			Categories: []types.PackageCategory{
 				types.PackageCategoryTool,
 			},

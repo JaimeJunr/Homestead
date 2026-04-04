@@ -5,7 +5,6 @@ import (
 	"github.com/JaimeJunr/Homestead/internal/tui/items"
 )
 
-// getMainMenuItems returns menu rows; "Plugins e temas Zsh" only when zsh core is installed.
 func getMainMenuItems(zshCoreInstalled bool) []list.Item {
 	out := []list.Item{
 		items.MenuItem{Label: "🧹 Limpeza do Sistema", Desc: "Scripts de limpeza e manutenção", Action: menuActionCleanup},

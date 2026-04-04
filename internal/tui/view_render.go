@@ -17,7 +17,6 @@ import (
 	"github.com/JaimeJunr/Homestead/internal/tui/theme"
 )
 
-// View renders the UI
 func (m Model) View() string {
 	if m.width == 0 {
 		return "Iniciando..."
@@ -89,7 +88,6 @@ func (m Model) View() string {
 	}
 }
 
-// renderConfirmation renders the confirmation dialog
 func (m Model) renderConfirmation() string {
 	var title, description string
 
@@ -184,7 +182,6 @@ func (m Model) renderConfirmation() string {
 	)
 }
 
-// renderInstallProgress renders the installation progress view
 func (m Model) renderInstallProgress() string {
 	var pkg entities.Package
 	if p, ok := m.selectedItem.(entities.Package); ok {
@@ -245,7 +242,6 @@ func scriptOutputCardWidth(termW int) int {
 	return boxW
 }
 
-// Área útil do viewport (cabeçalho + rodapé do cartão consomem linhas)
 func scriptOutputViewportWH(termW, termH int) (w, h int) {
 	boxW := scriptOutputCardWidth(termW)
 	w = boxW - 8
@@ -336,7 +332,6 @@ func (m Model) renderScriptOutput() string {
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, box.Render(content))
 }
 
-// renderZshApplyFeedback renders the Zsh apply state (applying / success / error)
 func (m Model) renderZshApplyFeedback() string {
 	title := theme.Title.Render("Configuração Zsh")
 
